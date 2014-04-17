@@ -2,7 +2,7 @@
 #include "client.h"
 #include "server.h"
 
-static void vtun_read_address(info, value)
+static void vtun_conf_read_address(info, value)
 	vtun_info_t info;
 	char *value;
 {
@@ -20,7 +20,7 @@ static void vtun_read_address(info, value)
 	info->addr.sin_addr.s_addr = inet_addr(name);
 }
 
-static void vtun_read_bind(info, value)
+static void vtun_conf_read_bind(info, value)
 	vtun_info_t info;
 	char *value;
 {
@@ -32,7 +32,7 @@ static void vtun_read_bind(info, value)
 	info->xfer_l2p = vtun_server_xfer_l2p;
 	info->xfer_p2l = vtun_server_xfer_p2l;
 
-	vtun_read_address(info, value);
+	vtun_conf_read_address(info, value);
 
 	if (bind(info->peer, (struct sockaddr *)&info->addr,
 		sizeof(info->addr)) < 0) {
@@ -43,7 +43,7 @@ static void vtun_read_bind(info, value)
 	info->addr.sin_family = AF_INET6;
 }
 
-static void vtun_read_connect(info, value)
+static void vtun_conf_read_connect(info, value)
 	vtun_info_t info;
 	char *value;
 {
@@ -55,10 +55,10 @@ static void vtun_read_connect(info, value)
 	info->xfer_l2p = vtun_client_xfer_l2p;
 	info->xfer_p2l = vtun_client_xfer_p2l;
 
-	vtun_read_address(info, value);
+	vtun_conf_read_address(info, value);
 }
 
-static void vtun_read_device(info, value)
+static void vtun_conf_read_device(info, value)
 	vtun_info_t info;
 	char *value;
 {
@@ -68,7 +68,7 @@ static void vtun_read_device(info, value)
 	}
 }
 
-static void vtun_read_key(info, value)
+static void vtun_conf_read_key(info, value)
 	vtun_info_t info;
 	char *value;
 {
@@ -96,13 +96,13 @@ static void vtun_read_key(info, value)
 typedef struct {
 	const char *name;
 	void (*func)(vtun_info_t, char *);
-} vtun_read_t;
+} vtun_conf_read_t;
 
-static const vtun_read_t handlers[] = {
-	{ "bind", vtun_read_bind },
-	{ "connect", vtun_read_connect },
-	{ "device", vtun_read_device },
-	{ "key", vtun_read_key },
+static const vtun_conf_read_t handlers[] = {
+	{ "bind", vtun_conf_read_bind },
+	{ "connect", vtun_conf_read_connect },
+	{ "device", vtun_conf_read_device },
+	{ "key", vtun_conf_read_key },
 	{ NULL, NULL },
 };
 
@@ -113,7 +113,7 @@ void vtun_conf_read(info, path)
 	int fd;
 	char buf[128], *lp, *t, *key, *value;
 	ssize_t len;
-	const vtun_read_t *r;
+	const vtun_conf_read_t *r;
 
 	if ((fd = open(path, O_RDONLY)) < 0) {
 		perror("open");
