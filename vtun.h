@@ -23,7 +23,8 @@ struct _vtun_info {
 	};
 
 	struct sockaddr_in addr;
-	int dev, sock;
+	int dev, ignore, sock;
+	struct timespec *keepalive;
 #ifdef DEBUG
 	char name1[32], name2[32];
 #endif

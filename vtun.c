@@ -48,13 +48,29 @@ void vtun_dump_iphdr(info)
 #endif
 }
 
+static void vtun_keepalive(info)
+	vtun_info_t *info;
+{
+	uint8_t buf[4];
+	ssize_t len;
+
+	memset(buf, 0, sizeof(buf));
+	len = sendto(info->sock, buf, sizeof(buf), 0,
+		(struct sockaddr *)&info->addr, sizeof(info->addr));
+	if (len < 0) {
+		perror("sendto");
+		exit(1);
+	}
+}
+
 int main(argc, argv)
 	int argc;
 	char *argv[];
 {
 	vtun_conf_t conf;
 	vtun_info_t *info;
-	int kq;
+	struct timespec w;
+	int kq, n;
 	struct kevent kev[2];
 	void (*func)(vtun_info_t *info);
 
@@ -72,10 +88,15 @@ int main(argc, argv)
 	vtun_conf_init(&conf, "vtun.conf");
 	info->addr = conf.addr;
 	info->dev = conf.dev;
+	info->ignore = conf.mode == VTUN_MODE_SERVER;
 	info->sock = conf.sock;
+	info->keepalive = conf.mode == VTUN_MODE_CLIENT ? &w : NULL;
 	memcpy(info->sched, conf.sched, sizeof(info->sched));
 	info->xfer_l2p = conf.xfer_l2p;
 	info->xfer_p2l = conf.xfer_p2l;
+
+	w.tv_sec = 30;
+	w.tv_nsec = 0;
 
 	EV_SET(&kev[0], info->dev, EVFILT_READ, EV_ADD, 0, 0, NULL);
 	EV_SET(&kev[1], info->sock, EVFILT_READ, EV_ADD, 0, 0, NULL);
@@ -85,13 +106,17 @@ int main(argc, argv)
 	}
 
 	for (;;) {
-		if (kevent(kq, NULL, 0, kev, 1, NULL) < 0) {
+		if ((n = kevent(kq, NULL, 0, kev, 1, info->keepalive)) < 0) {
 			perror("kevent");
 			exit(1);
 		}
-		func = kev->ident == info->dev ? info->xfer_l2p : info->xfer_p2l;
-		memset(info->buf, 0, sizeof(info->buf));
-		(*func)(info);
+		if (n == 0)
+			vtun_keepalive(info);
+		else {
+			func = kev->ident == info->dev ? info->xfer_l2p : info->xfer_p2l;
+			memset(info->buf, 0, sizeof(info->buf));
+			(*func)(info);
+		}
 	}
 
 	return (0);

@@ -17,10 +17,8 @@ void vtun_server_xfer_l2p(info)
 
 	vtun_dump_iphdr(info);
 
-	if (info->addr.sin_family != AF_INET) {
-		(void)fprintf(stderr, "peer has not been prepared yet.\n");
+	if (info->ignore)
 		return;
-	}
 
 	vtun_3des_encode(info, &len);
 
@@ -54,15 +52,17 @@ void vtun_server_xfer_p2l(info)
 	(void)printf("%ld bytes are received from %s:%d.\n", len,
 		inet_ntoa(ca.sin_addr), ntohs(ca.sin_port));
 #endif
-	if (len == 0)
-		return;
-
-	vtun_3des_decode(info, &len);
-	vtun_dump_iphdr(info);
 
 	info->addr.sin_family = ca.sin_family;
 	info->addr.sin_port = ca.sin_port;
 	info->addr.sin_addr = ca.sin_addr;
+	info->ignore = 0;
+
+	if (len < sizeof(info->iphdr))
+		return;
+
+	vtun_3des_decode(info, &len);
+	vtun_dump_iphdr(info);
 
 	if ((sent = write(info->dev, info->buf, ntohs(info->iphdr.ip_len))) < 0) {
 		perror("write");
