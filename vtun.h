@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <sys/event.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
@@ -27,7 +28,6 @@ struct _vtun_info {
 		struct ip iphdr;
 	};
 	int local;
-	void (*main)(vtun_info_t info);
 	vtun_mode_t mode;
 #ifdef DEBUG
 	char name1[32], name2[32];
@@ -36,8 +36,12 @@ struct _vtun_info {
 	struct sockaddr_in server;
 	DES_key_schedule sched[3];
 	DES_cblock temp;
+	void (*xfer_l2p)(vtun_info_t info);
+	void (*xfer_p2l)(vtun_info_t info);
 };
 
+extern void vtun_3des_decode(vtun_info_t info, ssize_t *len);
+extern void vtun_3des_encode(vtun_info_t info, ssize_t *len);
 extern void vtun_dump_iphdr(vtun_info_t info);
 
 #endif /* __include_vtun_h__ */

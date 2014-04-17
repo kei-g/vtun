@@ -28,8 +28,9 @@ static void vtun_read_bind(info, value)
 		(void)fprintf(stderr, "Unable to bind after connect.\n");
 		exit(1);
 	}
-	info->main = vtun_server;
 	info->mode = VTUN_MODE_SERVER;
+	info->xfer_l2p = vtun_server_xfer_l2p;
+	info->xfer_p2l = vtun_server_xfer_p2l;
 
 	vtun_read_address(info, value);
 
@@ -48,8 +49,9 @@ static void vtun_read_connect(info, value)
 		(void)fprintf(stderr, "Unable to connect after bind.\n");
 		exit(1);
 	}
-	info->main = vtun_client;
 	info->mode = VTUN_MODE_CLIENT;
+	info->xfer_l2p = vtun_client_xfer_l2p;
+	info->xfer_p2l = vtun_client_xfer_p2l;
 
 	vtun_read_address(info, value);
 }
@@ -125,10 +127,12 @@ void vtun_conf_read(info, path)
 	close(fd);
 
 	info->local = -1;
-	info->main = NULL;
 	info->mode = VTUN_MODE_UNSPECIFIED;
 	info->peer = -1;
 	memset(&info->server, 0, sizeof(info->server));
+	info->xfer_l2p = NULL;
+	info->xfer_p2l = NULL;
+
 	for (lp = strtok_r(buf, "\n", &t); lp; lp = strtok_r(NULL, "\n", &t)) {
 		key = strtok_r(lp, "=", &value);
 		for (r = handlers; r->name; r++)
@@ -136,5 +140,14 @@ void vtun_conf_read(info, path)
 				(*r->func)(info, value);
 				break;
 			}
+	}
+
+	if (info->local < 0) {
+		fprintf(stderr, "No device is specified.\n");
+		exit(1);
+	}
+	if (!info->xfer_l2p || !info->xfer_p2l) {
+		fprintf(stderr, "Neither bind nor connect is specified.\n");
+		exit(1);
 	}
 }
