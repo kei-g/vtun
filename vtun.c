@@ -52,6 +52,7 @@ int main(argc, argv)
 	int argc;
 	char *argv[];
 {
+	vtun_conf_t conf;
 	vtun_info_t *info;
 	int kq;
 	struct kevent kev[2];
@@ -68,10 +69,16 @@ int main(argc, argv)
 		exit(1);
 	}
 
-	vtun_conf_read(info, "vtun.conf");
+	vtun_conf_init(&conf, "vtun.conf");
+	info->addr = conf.addr;
+	info->dev = conf.dev;
+	info->sock = conf.sock;
+	memcpy(info->sched, conf.sched, sizeof(info->sched));
+	info->xfer_l2p = conf.xfer_l2p;
+	info->xfer_p2l = conf.xfer_p2l;
 
-	EV_SET(&kev[0], info->local, EVFILT_READ, EV_ADD, 0, 0, NULL);
-	EV_SET(&kev[1], info->peer, EVFILT_READ, EV_ADD, 0, 0, NULL);
+	EV_SET(&kev[0], info->dev, EVFILT_READ, EV_ADD, 0, 0, NULL);
+	EV_SET(&kev[1], info->sock, EVFILT_READ, EV_ADD, 0, 0, NULL);
 	if (kevent(kq, kev, sizeof(kev) / sizeof(kev[0]), NULL, 0, NULL) < 0) {
 		perror("kevent");
 		exit(1);
@@ -82,7 +89,7 @@ int main(argc, argv)
 			perror("kevent");
 			exit(1);
 		}
-		func = kev->ident == info->local ? info->xfer_l2p : info->xfer_p2l;
+		func = kev->ident == info->dev ? info->xfer_l2p : info->xfer_p2l;
 		memset(info->buf, 0, sizeof(info->buf));
 		(*func)(info);
 	}

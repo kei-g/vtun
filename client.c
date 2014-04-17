@@ -5,7 +5,7 @@ void vtun_client_xfer_l2p(info)
 {
 	ssize_t len, sent;
 
-	len = read(info->local, info->buf, sizeof(info->buf));
+	len = read(info->dev, info->buf, sizeof(info->buf));
 	if (len < 0) {
 		perror("read");
 		exit(1);
@@ -19,7 +19,7 @@ void vtun_client_xfer_l2p(info)
 
 	vtun_3des_encode(info, &len);
 
-	sent = sendto(info->peer, info->buf, len, 0,
+	sent = sendto(info->sock, info->buf, len, 0,
 		(struct sockaddr *)&info->addr, sizeof(info->addr));
 	if (sent < 0) {
 		perror("sendto");
@@ -38,7 +38,7 @@ void vtun_client_xfer_p2l(info)
 	ssize_t len;
 
 	salen = sizeof(sa);
-	len = recvfrom(info->peer, info->buf, sizeof(info->buf), 0,
+	len = recvfrom(info->sock, info->buf, sizeof(info->buf), 0,
 		(struct sockaddr *)&sa, &salen);
 	if (len < 0) {
 		perror("recvfrom");
@@ -56,7 +56,7 @@ void vtun_client_xfer_p2l(info)
 	vtun_3des_decode(info, &len);
 	vtun_dump_iphdr(info);
 
-	len = write(info->local, info->buf, len);
+	len = write(info->dev, info->buf, len);
 	if (len < 0) {
 		perror("write");
 		exit(1);

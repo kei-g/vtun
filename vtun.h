@@ -14,12 +14,6 @@
 #include <arpa/inet.h>
 #include <openssl/des.h>
 
-typedef enum {
-	VTUN_MODE_CLIENT,
-	VTUN_MODE_SERVER,
-	VTUN_MODE_UNSPECIFIED
-} vtun_mode_t;
-
 typedef struct _vtun_info vtun_info_t;
 
 struct _vtun_info {
@@ -29,12 +23,10 @@ struct _vtun_info {
 	};
 
 	struct sockaddr_in addr;
-	int local;
-	vtun_mode_t mode;
+	int dev, sock;
 #ifdef DEBUG
 	char name1[32], name2[32];
 #endif
-	int peer;
 	DES_key_schedule sched[3];
 	DES_cblock temp;
 	void (*xfer_l2p)(vtun_info_t *info);

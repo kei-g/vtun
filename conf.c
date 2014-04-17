@@ -2,74 +2,73 @@
 #include "client.h"
 #include "server.h"
 
-static void vtun_conf_read_address(info, value)
-	vtun_info_t *info;
+static void vtun_conf_read_address(conf, value)
+	vtun_conf_t *conf;
 	char *value;
 {
 	char *name, *port;
 
 	name = strtok_r(value, ":", &port);
 
-	if ((info->peer = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+	if ((conf->sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
 		perror("socket");
 		exit(1);
 	}
 
-	info->addr.sin_family = AF_INET;
-	info->addr.sin_port = htons(atoi(port));
-	info->addr.sin_addr.s_addr = inet_addr(name);
+	conf->addr.sin_family = AF_INET;
+	conf->addr.sin_port = htons(atoi(port));
+	conf->addr.sin_addr.s_addr = inet_addr(name);
 }
 
-static void vtun_conf_read_bind(info, value)
-	vtun_info_t *info;
+static void vtun_conf_read_bind(conf, value)
+	vtun_conf_t *conf;
 	char *value;
 {
-	if (info->mode == VTUN_MODE_CLIENT) {
+	struct sockaddr_in *addr = &conf->addr;
+
+	if (conf->mode == VTUN_MODE_CLIENT) {
 		(void)fprintf(stderr, "Unable to bind after connect.\n");
 		exit(1);
 	}
-	info->mode = VTUN_MODE_SERVER;
-	info->xfer_l2p = vtun_server_xfer_l2p;
-	info->xfer_p2l = vtun_server_xfer_p2l;
+	conf->mode = VTUN_MODE_SERVER;
+	conf->xfer_l2p = vtun_server_xfer_l2p;
+	conf->xfer_p2l = vtun_server_xfer_p2l;
 
-	vtun_conf_read_address(info, value);
+	vtun_conf_read_address(conf, value);
 
-	if (bind(info->peer, (struct sockaddr *)&info->addr,
-		sizeof(info->addr)) < 0) {
+	if (bind(conf->sock, (struct sockaddr *)addr, sizeof(*addr)) < 0) {
 		perror("bind");
 		exit(1);
 	}
-
-	info->addr.sin_family = AF_INET6;
 }
 
-static void vtun_conf_read_connect(info, value)
-	vtun_info_t *info;
+static void vtun_conf_read_connect(conf, value)
+	vtun_conf_t *conf;
 	char *value;
 {
-	if (info->mode == VTUN_MODE_SERVER) {
+	if (conf->mode == VTUN_MODE_SERVER) {
 		(void)fprintf(stderr, "Unable to connect after bind.\n");
 		exit(1);
 	}
-	info->mode = VTUN_MODE_CLIENT;
-	info->xfer_l2p = vtun_client_xfer_l2p;
-	info->xfer_p2l = vtun_client_xfer_p2l;
+	conf->mode = VTUN_MODE_CLIENT;
+	conf->xfer_l2p = vtun_client_xfer_l2p;
+	conf->xfer_p2l = vtun_client_xfer_p2l;
 
-	vtun_conf_read_address(info, value);
+	vtun_conf_read_address(conf, value);
 }
 
-static void vtun_conf_read_device(info, value)
-	vtun_info_t *info;
+static void vtun_conf_read_device(conf, value)
+	vtun_conf_t *conf;
 	char *value;
 {
-	if ((info->local = open(value, O_RDWR)) < 0) {
+	if ((conf->dev = open(value, O_RDWR)) < 0) {
 		perror("open");
 		exit(1);
 	}
 }
 
-static void vtun_conf_read_key(info, value)
-	vtun_info_t *info;
+static void vtun_conf_read_key(conf, value)
+	vtun_conf_t *conf;
 	char *value;
 {
 	DES_cblock key[3];
@@ -90,12 +89,12 @@ static void vtun_conf_read_key(info, value)
 	}
 
 	for (i = 0; i < sizeof(key) / sizeof(key[0]); i++)
-		DES_set_key_checked(&key[i], &info->sched[i]);
+		DES_set_key_checked(&key[i], &conf->sched[i]);
 }
 
 typedef struct {
 	const char *name;
-	void (*func)(vtun_info_t *info, char *value);
+	void (*func)(vtun_conf_t *conf, char *value);
 } vtun_conf_read_t;
 
 static const vtun_conf_read_t handlers[] = {
@@ -106,8 +105,8 @@ static const vtun_conf_read_t handlers[] = {
 	{ NULL, NULL },
 };
 
-void vtun_conf_read(info, path)
-	vtun_info_t *info;
+void vtun_conf_init(conf, path)
+	vtun_conf_t *conf;
 	const char *path;
 {
 	int fd;
@@ -128,27 +127,27 @@ void vtun_conf_read(info, path)
 
 	close(fd);
 
-	info->local = -1;
-	info->mode = VTUN_MODE_UNSPECIFIED;
-	info->peer = -1;
-	memset(&info->addr, 0, sizeof(info->addr));
-	info->xfer_l2p = NULL;
-	info->xfer_p2l = NULL;
+	memset(&conf->addr, 0, sizeof(conf->addr));
+	conf->dev = -1;
+	conf->sock = -1;
+	conf->mode = VTUN_MODE_UNSPECIFIED;
+	conf->xfer_l2p = NULL;
+	conf->xfer_p2l = NULL;
 
 	for (lp = strtok_r(buf, "\n", &t); lp; lp = strtok_r(NULL, "\n", &t)) {
 		key = strtok_r(lp, "=", &value);
 		for (r = handlers; r->name; r++)
 			if (strcmp(key, r->name) == 0) {
-				(*r->func)(info, value);
+				(*r->func)(conf, value);
 				break;
 			}
 	}
 
-	if (info->local < 0) {
+	if (conf->dev < 0) {
 		fprintf(stderr, "No device is specified.\n");
 		exit(1);
 	}
-	if (!info->xfer_l2p || !info->xfer_p2l) {
+	if (conf->sock < 0) {
 		fprintf(stderr, "Neither bind nor connect is specified.\n");
 		exit(1);
 	}
