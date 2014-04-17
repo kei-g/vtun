@@ -15,9 +15,9 @@ static void vtun_read_address(info, value)
 		exit(1);
 	}
 
-	info->server.sin_family = AF_INET;
-	info->server.sin_port = htons(atoi(port));
-	info->server.sin_addr.s_addr = inet_addr(name);
+	info->addr.sin_family = AF_INET;
+	info->addr.sin_port = htons(atoi(port));
+	info->addr.sin_addr.s_addr = inet_addr(name);
 }
 
 static void vtun_read_bind(info, value)
@@ -34,11 +34,13 @@ static void vtun_read_bind(info, value)
 
 	vtun_read_address(info, value);
 
-	if (bind(info->peer, (struct sockaddr *)&info->server,
-		sizeof(info->server)) < 0) {
+	if (bind(info->peer, (struct sockaddr *)&info->addr,
+		sizeof(info->addr)) < 0) {
 		perror("bind");
 		exit(1);
 	}
+
+	info->addr.sin_family = AF_INET6;
 }
 
 static void vtun_read_connect(info, value)
@@ -129,7 +131,7 @@ void vtun_conf_read(info, path)
 	info->local = -1;
 	info->mode = VTUN_MODE_UNSPECIFIED;
 	info->peer = -1;
-	memset(&info->server, 0, sizeof(info->server));
+	memset(&info->addr, 0, sizeof(info->addr));
 	info->xfer_l2p = NULL;
 	info->xfer_p2l = NULL;
 

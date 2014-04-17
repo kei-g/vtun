@@ -27,13 +27,14 @@ struct _vtun_info {
 		uint8_t buf[65536];
 		struct ip iphdr;
 	};
+
+	struct sockaddr_in addr;
 	int local;
 	vtun_mode_t mode;
 #ifdef DEBUG
 	char name1[32], name2[32];
 #endif
 	int peer;
-	struct sockaddr_in server;
 	DES_key_schedule sched[3];
 	DES_cblock temp;
 	void (*xfer_l2p)(vtun_info_t info);
