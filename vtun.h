@@ -19,12 +19,15 @@ typedef enum {
 	VTUN_MODE_UNSPECIFIED
 } vtun_mode_t;
 
-typedef struct {
+typedef struct _vtun_info *vtun_info_t;
+
+struct _vtun_info {
 	union {
 		uint8_t buf[65536];
 		struct ip iphdr;
 	};
 	int local;
+	void (*main)(vtun_info_t info);
 	vtun_mode_t mode;
 #ifdef DEBUG
 	char name1[32], name2[32];
@@ -33,9 +36,8 @@ typedef struct {
 	struct sockaddr_in server;
 	DES_key_schedule sched[3];
 	DES_cblock temp;
-} *vtun_info_t;
+};
 
-extern vtun_info_t vtun_init(const char *path);
 extern void vtun_dump_iphdr(vtun_info_t info);
 
 #endif /* __include_vtun_h__ */

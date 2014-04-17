@@ -1,15 +1,11 @@
 #include "vtun.h"
 
-int main(argc, argv)
-	int argc;
-	char *argv[];
-{
+void vtun_server(info)
 	vtun_info_t info;
+{
 	struct sockaddr_in ca;
 	socklen_t calen;
 	ssize_t len, i, sent;
-
-	info = vtun_init("vtun.conf");
 	for (;;) {
 		memset(info->buf, 0, sizeof(info->buf));
 		calen = sizeof(ca);
@@ -45,5 +41,4 @@ int main(argc, argv)
 		(void)printf("%ld bytes are written.\n", sent);
 #endif
 	}
-	return (0);
 }

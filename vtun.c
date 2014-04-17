@@ -1,7 +1,7 @@
 #include "vtun.h"
 #include "conf.h"
 
-vtun_info_t vtun_init(path)
+static vtun_info_t vtun_init(path)
 	const char *path;
 {
 	vtun_info_t info;
@@ -11,11 +11,6 @@ vtun_info_t vtun_init(path)
 		perror("malloc");
 		exit(1);
 	}
-
-	info->local = -1;
-	info->mode = VTUN_MODE_UNSPECIFIED;
-	info->peer = -1;
-	memset(&info->server, 0, sizeof(info->server));
 
 	vtun_conf_read(info, path);
 
@@ -33,4 +28,18 @@ void vtun_dump_iphdr(info)
 		inet_ntoa_r(iphdr->ip_src, info->name1, sizeof(info->name1)),
 		inet_ntoa_r(iphdr->ip_dst, info->name2, sizeof(info->name2)));
 #endif
+}
+
+int main(argc, argv)
+	int argc;
+	char *argv[];
+{
+	vtun_info_t info;
+	info = vtun_init("vtun.conf");
+	if (!info->main) {
+		fprintf(stderr, "Neither bind nor connect is specified.\n");
+		exit(1);
+	}
+	(*info->main)(info);
+	return (0);
 }

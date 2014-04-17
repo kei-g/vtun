@@ -1,13 +1,9 @@
 #include "vtun.h"
 
-int main(argc, argv)
-	int argc;
-	char *argv[];
-{
+void vtun_client(info)
 	vtun_info_t info;
+{
 	ssize_t len, i, sent;
-
-	info = vtun_init("vtun.conf");
 	for (;;) {
 		memset(info->buf, 0, sizeof(info->buf));
 		len = read(info->local, info->buf, sizeof(info->buf));
@@ -43,5 +39,4 @@ int main(argc, argv)
 		(void)printf("%ld bytes are sent.\n", sent);
 #endif
 	}
-	return (0);
 }
