@@ -64,15 +64,21 @@ static void vtun_read_key(info, value)
 	vtun_info_t info;
 	char *value;
 {
-	char *v, *t;
-	int i;
 	DES_cblock key[3];
+	char *t;
+	long v;
 	uint8_t *p = (uint8_t *)key;
+	ssize_t i;
 
 	memset(key, 0, sizeof(key));
-	for (v = strtok_r(value, " ", &t); v; v = strtok_r(NULL, " ", &t)) {
-		sscanf(v, "%02X", &i);
-		*p++ = (uint8_t)i;
+	for (t = value; *t;) {
+		errno = 0;
+		v = strtol(t, &t, 16);
+		if (errno != 0) {
+			perror("strtol");
+			exit(1);
+		}
+		*p++ = (uint8_t)v;
 	}
 
 	for (i = 0; i < sizeof(key) / sizeof(key[0]); i++)
