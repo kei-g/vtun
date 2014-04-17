@@ -2,7 +2,7 @@
 #include "conf.h"
 
 void vtun_3des_decode(info, len)
-	vtun_info_t info;
+	vtun_info_t *info;
 	ssize_t *len;
 {
 	ssize_t i;
@@ -19,7 +19,7 @@ void vtun_3des_decode(info, len)
 }
 
 void vtun_3des_encode(info, len)
-	vtun_info_t info;
+	vtun_info_t *info;
 	ssize_t *len;
 {
 	ssize_t i;
@@ -36,7 +36,7 @@ void vtun_3des_encode(info, len)
 }
 
 void vtun_dump_iphdr(info)
-	vtun_info_t info;
+	vtun_info_t *info;
 {
 #ifdef DEBUG
 	const struct ip *const iphdr = &info->iphdr;
@@ -52,12 +52,12 @@ int main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	vtun_info_t info;
+	vtun_info_t *info;
 	int kq;
 	struct kevent kev[2];
-	void (*func)(vtun_info_t);
+	void (*func)(vtun_info_t *info);
 
-	info = (vtun_info_t)malloc(sizeof(*info));
+	info = (vtun_info_t *)malloc(sizeof(*info));
 	if (!info) {
 		perror("malloc");
 		exit(1);

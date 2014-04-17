@@ -1,7 +1,7 @@
 #include "server.h"
 
 void vtun_server_xfer_l2p(info)
-	vtun_info_t info;
+	vtun_info_t *info;
 {
 	ssize_t len, sent;
 
@@ -37,7 +37,7 @@ void vtun_server_xfer_l2p(info)
 }
 
 void vtun_server_xfer_p2l(info)
-	vtun_info_t info;
+	vtun_info_t *info;
 {
 	socklen_t calen;
 	struct sockaddr_in ca;

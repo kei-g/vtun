@@ -1,7 +1,7 @@
 #include "client.h"
 
 void vtun_client_xfer_l2p(info)
-	vtun_info_t info;
+	vtun_info_t *info;
 {
 	ssize_t len, sent;
 
@@ -31,7 +31,7 @@ void vtun_client_xfer_l2p(info)
 }
 
 void vtun_client_xfer_p2l(info)
-	vtun_info_t info;
+	vtun_info_t *info;
 {
 	socklen_t salen;
 	struct sockaddr_in sa;

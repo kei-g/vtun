@@ -20,7 +20,7 @@ typedef enum {
 	VTUN_MODE_UNSPECIFIED
 } vtun_mode_t;
 
-typedef struct _vtun_info *vtun_info_t;
+typedef struct _vtun_info vtun_info_t;
 
 struct _vtun_info {
 	union {
@@ -37,12 +37,12 @@ struct _vtun_info {
 	int peer;
 	DES_key_schedule sched[3];
 	DES_cblock temp;
-	void (*xfer_l2p)(vtun_info_t info);
-	void (*xfer_p2l)(vtun_info_t info);
+	void (*xfer_l2p)(vtun_info_t *info);
+	void (*xfer_p2l)(vtun_info_t *info);
 };
 
-extern void vtun_3des_decode(vtun_info_t info, ssize_t *len);
-extern void vtun_3des_encode(vtun_info_t info, ssize_t *len);
-extern void vtun_dump_iphdr(vtun_info_t info);
+extern void vtun_3des_decode(vtun_info_t *info, ssize_t *len);
+extern void vtun_3des_encode(vtun_info_t *info, ssize_t *len);
+extern void vtun_dump_iphdr(vtun_info_t *info);
 
 #endif /* __include_vtun_h__ */

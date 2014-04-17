@@ -3,6 +3,6 @@
 
 #include "vtun.h"
 
-extern void vtun_conf_read(vtun_info_t info, const char *path);
+extern void vtun_conf_read(vtun_info_t *info, const char *path);
 
 #endif /* __include_conf_h__ */

@@ -3,7 +3,7 @@
 #include "server.h"
 
 static void vtun_conf_read_address(info, value)
-	vtun_info_t info;
+	vtun_info_t *info;
 	char *value;
 {
 	char *name, *port;
@@ -21,7 +21,7 @@ static void vtun_conf_read_address(info, value)
 }
 
 static void vtun_conf_read_bind(info, value)
-	vtun_info_t info;
+	vtun_info_t *info;
 	char *value;
 {
 	if (info->mode == VTUN_MODE_CLIENT) {
@@ -44,7 +44,7 @@ static void vtun_conf_read_bind(info, value)
 }
 
 static void vtun_conf_read_connect(info, value)
-	vtun_info_t info;
+	vtun_info_t *info;
 	char *value;
 {
 	if (info->mode == VTUN_MODE_SERVER) {
@@ -59,7 +59,7 @@ static void vtun_conf_read_connect(info, value)
 }
 
 static void vtun_conf_read_device(info, value)
-	vtun_info_t info;
+	vtun_info_t *info;
 	char *value;
 {
 	if ((info->local = open(value, O_RDWR)) < 0) {
@@ -69,7 +69,7 @@ static void vtun_conf_read_device(info, value)
 }
 
 static void vtun_conf_read_key(info, value)
-	vtun_info_t info;
+	vtun_info_t *info;
 	char *value;
 {
 	DES_cblock key[3];
@@ -95,7 +95,7 @@ static void vtun_conf_read_key(info, value)
 
 typedef struct {
 	const char *name;
-	void (*func)(vtun_info_t, char *);
+	void (*func)(vtun_info_t *info, char *value);
 } vtun_conf_read_t;
 
 static const vtun_conf_read_t handlers[] = {
@@ -107,7 +107,7 @@ static const vtun_conf_read_t handlers[] = {
 };
 
 void vtun_conf_read(info, path)
-	vtun_info_t info;
+	vtun_info_t *info;
 	const char *path;
 {
 	int fd;
