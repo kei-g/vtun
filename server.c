@@ -44,7 +44,7 @@ void vtun_server_xfer_p2l(info)
 	ssize_t len, sent;
 
 	calen = sizeof(ca);
-	len = recvfrom(info->dev, info->buf, sizeof(info->buf), 0,
+	len = recvfrom(info->sock, info->buf, sizeof(info->buf), 0,
 		(struct sockaddr *)&ca, &calen);
 	if (len < 0) {
 		perror("recvfrom");
