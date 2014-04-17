@@ -2,6 +2,9 @@
 #include "client.h"
 #include "server.h"
 
+#include <net/if.h>
+#include <sys/ioctl.h>
+
 static void vtun_conf_read_address(conf, value)
 	vtun_conf_t *conf;
 	char *value;
@@ -57,11 +60,55 @@ static void vtun_conf_read_connect(conf, value)
 	vtun_conf_read_address(conf, value);
 }
 
+#define INET(p, a) \
+	(p)->sin_len = sizeof(*(p)); \
+	(p)->sin_family = AF_INET; \
+	(p)->sin_addr.s_addr = (a);
+
+#define MASK(n) \
+	htonl(0xffffffff ^ (n == 32 ? 0 : ((1 << (32 - n)) - 1)))
+
 static void vtun_conf_read_device(conf, value)
 	vtun_conf_t *conf;
 	char *value;
 {
-	if ((conf->dev = open(value, O_RDWR)) < 0) {
+	char *dev, *name, *t, *dst, *src;
+	long netmask;
+	int sock;
+	struct ifaliasreq ifr;
+	struct sockaddr_in *const addr = (struct sockaddr_in *)&ifr.ifra_addr;
+	struct sockaddr_in *const mask = (struct sockaddr_in *)&ifr.ifra_mask;
+	struct sockaddr_in *const dest = (struct sockaddr_in *)&ifr.ifra_broadaddr;
+
+	dev = strtok_r(value, ":", &dst);
+	for (name = strtok_r(dev, "/", &t); t; name = strtok_r(NULL, "/", &t));
+	t = strtok_r(NULL, ":", &dst);
+	src = strtok_r(t, "/", &t);
+	errno = 0;
+	netmask = strtol(t, &t, 10);
+	if (errno != 0) {
+		perror("strtol");
+		exit(1);
+	}
+
+	if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+		perror("socket");
+		exit(1);
+	}
+
+	memset(&ifr, 0, sizeof(ifr));
+	strcpy(ifr.ifra_name, name);
+	INET(addr, inet_addr(src));
+	INET(mask, MASK(netmask));
+	INET(dest, inet_addr(dst));
+	if (ioctl(sock, SIOCAIFADDR, &ifr) < 0) {
+		perror("ioctl SIOCAIFADDR");
+		exit(1);
+	}
+
+	close(sock);
+
+	if ((conf->dev = open(dev, O_RDWR)) < 0) {
 		perror("open");
 		exit(1);
 	}
