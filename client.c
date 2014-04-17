@@ -48,13 +48,13 @@ void vtun_client_xfer_p2l(info)
 	(void)printf("%ld bytes are received from %s:%d.\n", len,
 		inet_ntoa(sa.sin_addr), ntohs(sa.sin_port));
 #endif
-	vtun_dump_iphdr(info);
 
 	if (sa.sin_addr.s_addr != info->addr.sin_addr.s_addr ||
 		sa.sin_port != info->addr.sin_port)
 		return;
 
 	vtun_3des_decode(info, &len);
+	vtun_dump_iphdr(info);
 
 	len = write(info->local, info->buf, len);
 	if (len < 0) {
