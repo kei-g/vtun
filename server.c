@@ -8,7 +8,6 @@ int main(argc, argv)
 	struct sockaddr_in ca;
 	socklen_t calen;
 	ssize_t len, i, sent;
-	DES_cblock temp;
 
 	info = vtun_init("vtun.conf");
 	for (;;) {
@@ -26,14 +25,15 @@ int main(argc, argv)
 #endif
 		if (len == 0)
 			break;
-		for (i = 0; i < len; i += sizeof(temp)) {
-			memset(&temp, 0, sizeof(temp));
-			DES_ecb3_encrypt((DES_cblock *)&info->buf[i], &temp,
+		for (i = 0; i < len; i += sizeof(info->temp)) {
+			memset(&info->temp, 0, sizeof(info->temp));
+			DES_ecb3_encrypt((DES_cblock *)&info->buf[i],
+				&info->temp,
 				&info->sched[0],
 				&info->sched[1],
 				&info->sched[2],
 				DES_DECRYPT);
-			memcpy(&info->buf[i], &temp, sizeof(temp));
+			memcpy(&info->buf[i], &info->temp, sizeof(info->temp));
 		}
 		vtun_dump_iphdr(info);
 		sent = write(info->local, info->buf, ntohs(info->iphdr.ip_len));
