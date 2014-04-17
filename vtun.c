@@ -1,22 +1,6 @@
 #include "vtun.h"
 #include "conf.h"
 
-static vtun_info_t vtun_init(path)
-	const char *path;
-{
-	vtun_info_t info;
-
-	info = (vtun_info_t)malloc(sizeof(*info));
-	if (!info) {
-		perror("malloc");
-		exit(1);
-	}
-
-	vtun_conf_read(info, path);
-
-	return (info);
-}
-
 void vtun_dump_iphdr(info)
 	vtun_info_t info;
 {
@@ -35,11 +19,20 @@ int main(argc, argv)
 	char *argv[];
 {
 	vtun_info_t info;
-	info = vtun_init("vtun.conf");
+
+	info = (vtun_info_t)malloc(sizeof(*info));
+	if (!info) {
+		perror("malloc");
+		exit(1);
+	}
+
+	vtun_conf_read(info, "vtun.conf");
+
 	if (!info->main) {
 		fprintf(stderr, "Neither bind nor connect is specified.\n");
 		exit(1);
 	}
 	(*info->main)(info);
+
 	return (0);
 }
