@@ -55,6 +55,7 @@ int main(argc, argv)
 	vtun_info_t info;
 	int kq;
 	struct kevent kev[2];
+	void (*func)(vtun_info_t);
 
 	info = (vtun_info_t)malloc(sizeof(*info));
 	if (!info) {
@@ -81,11 +82,9 @@ int main(argc, argv)
 			perror("kevent");
 			exit(1);
 		}
+		func = kev->ident == info->local ? info->xfer_l2p : info->xfer_p2l;
 		memset(info->buf, 0, sizeof(info->buf));
-		if (kev->ident == info->local)
-			(*info->xfer_l2p)(info);
-		else if (kev->ident == info->peer)
-			(*info->xfer_p2l)(info);
+		(*func)(info);
 	}
 
 	return (0);
