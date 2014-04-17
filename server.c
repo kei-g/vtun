@@ -1,4 +1,4 @@
-#include "vtun.h"
+#include "server.h"
 
 void vtun_server(info)
 	vtun_info_t info;
