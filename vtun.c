@@ -41,11 +41,26 @@ void vtun_dump_iphdr(info)
 #ifdef DEBUG
 	const struct ip *const iphdr = &info->iphdr;
 	(void)printf("LEN=%d,ID=%d,OFF=%d,TTL=%d,PROTO=%d,%s => %s\n",
-		ntohs(iphdr->ip_len), iphdr->ip_id,
+		ntohs(iphdr->ip_len), ntohs(iphdr->ip_id),
 		ntohs(iphdr->ip_off), iphdr->ip_ttl, iphdr->ip_p,
 		inet_ntoa_r(iphdr->ip_src, info->name1, sizeof(info->name1)),
 		inet_ntoa_r(iphdr->ip_dst, info->name2, sizeof(info->name2)));
 #endif
+}
+
+static void vtun_info_init(info, conf, w)
+	vtun_info_t *info;
+	const vtun_conf_t *conf;
+	struct timespec *w;
+{
+	info->addr = conf->addr;
+	info->dev = conf->dev;
+	info->ignore = conf->mode == VTUN_MODE_SERVER;
+	info->sock = conf->sock;
+	info->keepalive = conf->mode == VTUN_MODE_CLIENT ? w : NULL;
+	memcpy(info->sched, conf->sched, sizeof(info->sched));
+	info->xfer_l2p = conf->xfer_l2p;
+	info->xfer_p2l = conf->xfer_p2l;
 }
 
 static void vtun_keepalive(info)
@@ -86,17 +101,10 @@ int main(argc, argv)
 	}
 
 	vtun_conf_init(&conf, "vtun.conf");
-	info->addr = conf.addr;
-	info->dev = conf.dev;
-	info->ignore = conf.mode == VTUN_MODE_SERVER;
-	info->sock = conf.sock;
-	info->keepalive = conf.mode == VTUN_MODE_CLIENT ? &w : NULL;
-	memcpy(info->sched, conf.sched, sizeof(info->sched));
-	info->xfer_l2p = conf.xfer_l2p;
-	info->xfer_p2l = conf.xfer_p2l;
 
 	w.tv_sec = 30;
 	w.tv_nsec = 0;
+	vtun_info_init(info, &conf, &w);
 
 	EV_SET(&kev[0], info->dev, EVFILT_READ, EV_ADD, 0, 0, NULL);
 	EV_SET(&kev[1], info->sock, EVFILT_READ, EV_ADD, 0, 0, NULL);
