@@ -1,20 +1,25 @@
 #include "vtun.h"
 #include "conf.h"
 
+void vtun_3des(info, len, enc)
+	vtun_info_t *info;
+	ssize_t len;
+	int enc;
+{
+	ssize_t i;
+	for (i = 0; i < len; i += sizeof(info->temp)) {
+		memset(&info->temp, 0, sizeof(info->temp));
+		DES_ecb3_encrypt((DES_cblock *)&info->buf[i], &info->temp,
+			&info->sched[0], &info->sched[1], &info->sched[2], enc);
+		memcpy(&info->buf[i], &info->temp, sizeof(info->temp));
+	}
+}
+
 void vtun_3des_decode(info, len)
 	vtun_info_t *info;
 	ssize_t *len;
 {
-	ssize_t i;
-	for (i = 0; i < *len; i += sizeof(info->temp)) {
-		memset(&info->temp, 0, sizeof(info->temp));
-		DES_ecb3_encrypt((DES_cblock *)&info->buf[i], &info->temp,
-			&info->sched[0],
-			&info->sched[1],
-			&info->sched[2],
-			DES_DECRYPT);
-		memcpy(&info->buf[i], &info->temp, sizeof(info->temp));
-	}
+	vtun_3des(info, *len, DES_DECRYPT);
 	*len = ntohs(info->iphdr.ip_len);
 }
 
@@ -22,17 +27,8 @@ void vtun_3des_encode(info, len)
 	vtun_info_t *info;
 	ssize_t *len;
 {
-	ssize_t i;
 	*len = (*len + 7) & ~7;
-	for (i = 0; i < *len; i += sizeof(info->temp)) {
-		memset(&info->temp, 0, sizeof(info->temp));
-		DES_ecb3_encrypt((DES_cblock *)&info->buf[i], &info->temp,
-			&info->sched[0],
-			&info->sched[1],
-			&info->sched[2],
-			DES_ENCRYPT);
-		memcpy(&info->buf[i], &info->temp, sizeof(info->temp));
-	}
+	vtun_3des(info, *len, DES_ENCRYPT);
 }
 
 void vtun_dump_iphdr(info)
