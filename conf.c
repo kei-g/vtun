@@ -130,7 +130,7 @@ void vtun_conf_init(conf, path)
 	const char *path;
 {
 	int fd;
-	char buf[128], *lp, *t, *key, *value;
+	char buf[256], *lp, *t, *key, *value;
 	ssize_t len;
 	const vtun_conf_read_t *r;
 
