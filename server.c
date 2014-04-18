@@ -37,25 +37,25 @@ void vtun_server_xfer_l2p(info)
 void vtun_server_xfer_p2l(info)
 	vtun_info_t *info;
 {
-	socklen_t calen;
-	struct sockaddr_in ca;
+	socklen_t addrlen;
+	struct sockaddr_in addr;
 	ssize_t len, sent;
 
-	calen = sizeof(ca);
+	addrlen = sizeof(addr);
 	len = recvfrom(info->sock, info->buf, sizeof(info->buf), 0,
-		(struct sockaddr *)&ca, &calen);
+		(struct sockaddr *)&addr, &addrlen);
 	if (len < 0) {
 		perror("recvfrom");
 		exit(1);
 	}
 #ifdef DEBUG
 	(void)printf("%ld bytes are received from %s:%d.\n", len,
-		inet_ntoa(ca.sin_addr), ntohs(ca.sin_port));
+		inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
 #endif
 
-	info->addr.sin_family = ca.sin_family;
-	info->addr.sin_port = ca.sin_port;
-	info->addr.sin_addr = ca.sin_addr;
+	info->addr.sin_family = addr.sin_family;
+	info->addr.sin_port = addr.sin_port;
+	info->addr.sin_addr = addr.sin_addr;
 	info->ignore = 0;
 
 	if (len < sizeof(info->iphdr))
@@ -64,7 +64,7 @@ void vtun_server_xfer_p2l(info)
 	vtun_3des_decode(info, &len);
 	vtun_dump_iphdr(info);
 
-	if ((sent = write(info->dev, info->buf, ntohs(info->iphdr.ip_len))) < 0) {
+	if ((sent = write(info->dev, info->buf, len)) < 0) {
 		perror("write");
 		exit(1);
 	}
