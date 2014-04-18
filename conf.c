@@ -63,11 +63,12 @@ static void vtun_conf_read_device(conf, value)
 	vtun_conf_t *conf;
 	char *value;
 {
-	char *dev, *name, *t, *dst, *src;
+	char *t, *dst, dev[32], *name, *src;
 	long mask;
 
-	dev = strtok_r(value, ":", &dst);
-	for (name = strtok_r(dev, "/", &t); t; name = strtok_r(NULL, "/", &t));
+	t = strtok_r(value, ":", &dst);
+	strcpy(dev, t);
+	for (name = strtok_r(t, "/", &t); t; name = strtok_r(NULL, "/", &t));
 	t = strtok_r(NULL, ":", &dst);
 	src = strtok_r(t, "/", &t);
 	errno = 0;
@@ -81,6 +82,7 @@ static void vtun_conf_read_device(conf, value)
 
 	if ((conf->dev = open(dev, O_RDWR)) < 0) {
 		perror("open");
+		(void)fprintf(stderr, "Unable to open %s\n", dev);
 		exit(1);
 	}
 }
@@ -134,6 +136,7 @@ void vtun_conf_init(conf, path)
 
 	if ((fd = open(path, O_RDONLY)) < 0) {
 		perror("open");
+		(void)fprintf(stderr, "Unable to open %s\n", path);
 		exit(1);
 	}
 
