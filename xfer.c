@@ -6,9 +6,10 @@ static void vtun_dump_iphdr(info)
 	vtun_info_t *info;
 {
 	const struct ip *const iphdr = &info->iphdr;
-	(void)printf("LEN=%d,ID=%d,OFF=%d,TTL=%d,PROTO=%d,%s => %s\n",
+	(void)printf("LEN=%u,ID=%u,F=%0x,OFF=%u,TTL=%u,PROTO=%u,%s => %s\n",
 		ntohs(iphdr->ip_len), ntohs(iphdr->ip_id),
-		ntohs(iphdr->ip_off), iphdr->ip_ttl, iphdr->ip_p,
+		ntohs(iphdr->ip_off) >> 13, ntohs(iphdr->ip_off) & 0x1fff,
+		iphdr->ip_ttl, iphdr->ip_p,
 		inet_ntoa_r(iphdr->ip_src, info->name1, sizeof(info->name1)),
 		inet_ntoa_r(iphdr->ip_dst, info->name2, sizeof(info->name2)));
 }
