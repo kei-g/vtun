@@ -14,6 +14,8 @@ typedef struct _vtun_conf vtun_conf_t;
 struct _vtun_conf {
 	struct sockaddr_in addr;
 	int dev, sock;
+	char dev_type[16], ifa_src[16], ifa_dst[16], ifr_name[16];
+	uint32_t ifa_mask;
 	vtun_mode_t mode;
 	DES_key_schedule sched[3];
 	int (*xfer_p2l)(vtun_info_t *info, const struct sockaddr_in *addr);

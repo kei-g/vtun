@@ -23,7 +23,7 @@ void vtun_ioctl_add_ifaddr(ifr_name, src, netmask, dst)
 	struct sockaddr_in *const mask = (struct sockaddr_in *)&ifr.ifra_mask;
 	struct sockaddr_in *const dest = (struct sockaddr_in *)&ifr.ifra_broadaddr;
 
-	if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+	if ((sock = socket(AF_INET, SOCK_RAW, IPPROTO_RAW)) < 0) {
 		perror("socket");
 		exit(1);
 	}
@@ -36,6 +36,50 @@ void vtun_ioctl_add_ifaddr(ifr_name, src, netmask, dst)
 	if (ioctl(sock, SIOCAIFADDR, &ifr) < 0) {
 		perror("ioctl SIOCAIFADDR");
 		exit(1);
+	}
+
+	close(sock);
+}
+
+void vtun_ioctl_create_interface(dev_type, ifr_name)
+	const char *dev_type;
+	char *ifr_name;
+{
+	int sock;
+	struct ifreq ifr;
+
+	if ((sock = socket(AF_INET, SOCK_RAW, IPPROTO_RAW)) < 0) {
+		perror("socket");
+		exit(1);
+	}
+
+	memset(&ifr, 0, sizeof(ifr));
+	strcpy(ifr.ifr_name, dev_type);
+	if (ioctl(sock, SIOCIFCREATE2, &ifr) < 0) {
+		perror("ioctl SIOCIFCREATE2");
+		exit(1);
+	}
+	strcpy(ifr_name, ifr.ifr_name);
+
+	close(sock);
+}
+
+void vtun_ioctl_destroy_interface(ifr_name)
+	const char *ifr_name;
+{
+	int sock;
+	struct ifreq ifr;
+
+	if ((sock = socket(AF_INET, SOCK_RAW, IPPROTO_RAW)) < 0) {
+		perror("socket");
+		return;
+	}
+
+	memset(&ifr, 0, sizeof(ifr));
+	strcpy(ifr.ifr_name, ifr_name);
+	if (ioctl(sock, SIOCIFDESTROY, &ifr) < 0) {
+		perror("ioctl SIOCIFDESTROY");
+		return;
 	}
 
 	close(sock);

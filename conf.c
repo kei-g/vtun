@@ -61,26 +61,25 @@ static void vtun_conf_read_device(conf, value)
 	vtun_conf_t *conf;
 	char *value;
 {
-	char *t, *dst, dev[32], *name, *src;
-	long mask;
+	strcpy(conf->dev_type, value);
+}
 
-	t = strtok_r(value, ":", &dst);
-	strcpy(dev, t);
-	for (name = strtok_r(t, "/", &t); t; name = strtok_r(NULL, "/", &t));
-	t = strtok_r(NULL, ":", &dst);
-	src = strtok_r(t, "/", &t);
+static void vtun_conf_read_ifaddr(conf, value)
+	vtun_conf_t *conf;
+	char *value;
+{
+	char *src, *dst, *mask;
+
+	src = strtok_r(value, " ", &dst);
+	strcpy(conf->ifa_dst, dst);
+
+	src = strtok_r(src, "/", &mask);
+	strcpy(conf->ifa_src, src);
+
 	errno = 0;
-	mask = strtol(t, &t, 10);
-	if (errno != 0) {
+	conf->ifa_mask = strtol(mask, NULL, 10);
+	if (errno) {
 		perror("strtol");
-		exit(1);
-	}
-
-	vtun_ioctl_add_ifaddr(name, src, (uint32_t)mask, dst);
-
-	if ((conf->dev = open(dev, O_RDWR)) < 0) {
-		perror("open");
-		(void)fprintf(stderr, "Unable to open %s\n", dev);
 		exit(1);
 	}
 }
@@ -119,6 +118,7 @@ static const vtun_conf_read_t handlers[] = {
 	{ "bind", vtun_conf_read_bind },
 	{ "connect", vtun_conf_read_connect },
 	{ "device", vtun_conf_read_device },
+	{ "ifaddr", vtun_conf_read_ifaddr },
 	{ "key", vtun_conf_read_key },
 	{ NULL, NULL },
 };
@@ -128,7 +128,7 @@ void vtun_conf_init(conf, path)
 	const char *path;
 {
 	int fd;
-	char buf[256], *lp, *t, *key, *value;
+	char buf[512], *lp, *t, *key, *value, dev_name[24];
 	ssize_t len;
 	const vtun_conf_read_t *r;
 
@@ -146,11 +146,10 @@ void vtun_conf_init(conf, path)
 
 	close(fd);
 
-	memset(&conf->addr, 0, sizeof(conf->addr));
+	memset(conf, 0, sizeof(*conf));
 	conf->dev = -1;
 	conf->sock = -1;
 	conf->mode = VTUN_MODE_UNSPECIFIED;
-	conf->xfer_p2l = NULL;
 
 	for (lp = strtok_r(buf, "\n", &t); lp; lp = strtok_r(NULL, "\n", &t)) {
 		key = strtok_r(lp, "=", &value);
@@ -161,12 +160,27 @@ void vtun_conf_init(conf, path)
 			}
 	}
 
-	if (conf->dev < 0) {
+	if (!*conf->dev_type) {
 		fprintf(stderr, "No device is specified.\n");
+		exit(1);
+	}
+	if (!*conf->ifa_src || !*conf->ifa_dst) {
+		fprintf(stderr, "No ifaddr is specified.\n");
 		exit(1);
 	}
 	if (conf->sock < 0) {
 		fprintf(stderr, "Neither bind nor connect is specified.\n");
+		exit(1);
+	}
+
+	vtun_ioctl_create_interface(conf->dev_type, conf->ifr_name);
+	vtun_ioctl_add_ifaddr(conf->ifr_name, conf->ifa_src,
+		conf->ifa_mask, conf->ifa_dst);
+
+	sprintf(dev_name, "/dev/%s", conf->ifr_name);
+	if ((conf->dev = open(dev_name, O_RDWR)) < 0) {
+		perror("open");
+		(void)fprintf(stderr, "Unable to open %s\n", dev_name);
 		exit(1);
 	}
 }
