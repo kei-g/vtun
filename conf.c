@@ -3,6 +3,7 @@
 #include "client.h"
 #include "server.h"
 #include "ioctl.h"
+#include "sig.h"
 
 static void vtun_conf_read_address(conf, value)
 	vtun_conf_t *conf;
@@ -174,6 +175,8 @@ void vtun_conf_init(conf, path)
 	}
 
 	vtun_ioctl_create_interface(conf->dev_type, conf->ifr_name);
+	vtun_sig_init();
+	vtun_sig_add_interface_by_name(conf->ifr_name);
 	vtun_ioctl_add_ifaddr(conf->ifr_name, conf->ifa_src,
 		conf->ifa_mask, conf->ifa_dst);
 
@@ -183,4 +186,5 @@ void vtun_conf_init(conf, path)
 		(void)fprintf(stderr, "Unable to open %s\n", dev_name);
 		exit(1);
 	}
+	vtun_sig_add_interface_by_device(conf->dev);
 }
