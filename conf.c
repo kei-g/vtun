@@ -33,7 +33,6 @@ static void vtun_conf_read_bind(conf, value)
 		exit(1);
 	}
 	conf->mode = VTUN_MODE_SERVER;
-	conf->xfer_l2p = vtun_server_xfer_l2p;
 	conf->xfer_p2l = vtun_server_xfer_p2l;
 
 	vtun_conf_read_address(conf, value);
@@ -53,7 +52,6 @@ static void vtun_conf_read_connect(conf, value)
 		exit(1);
 	}
 	conf->mode = VTUN_MODE_CLIENT;
-	conf->xfer_l2p = vtun_client_xfer_l2p;
 	conf->xfer_p2l = vtun_client_xfer_p2l;
 
 	vtun_conf_read_address(conf, value);
@@ -152,7 +150,6 @@ void vtun_conf_init(conf, path)
 	conf->dev = -1;
 	conf->sock = -1;
 	conf->mode = VTUN_MODE_UNSPECIFIED;
-	conf->xfer_l2p = NULL;
 	conf->xfer_p2l = NULL;
 
 	for (lp = strtok_r(buf, "\n", &t); lp; lp = strtok_r(NULL, "\n", &t)) {

@@ -16,8 +16,7 @@ struct _vtun_conf {
 	int dev, sock;
 	vtun_mode_t mode;
 	DES_key_schedule sched[3];
-	void (*xfer_l2p)(vtun_info_t *info);
-	void (*xfer_p2l)(vtun_info_t *info);
+	int (*xfer_p2l)(vtun_info_t *info, const struct sockaddr_in *addr);
 };
 
 extern void vtun_conf_init(vtun_conf_t *conf, const char *path);

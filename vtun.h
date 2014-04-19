@@ -21,6 +21,7 @@ struct _vtun_info {
 		uint8_t buf[65536];
 		struct ip iphdr;
 	};
+	ssize_t buflen;
 
 	struct sockaddr_in addr;
 	int dev, ignore, sock;
@@ -29,13 +30,7 @@ struct _vtun_info {
 	char name1[32], name2[32];
 #endif
 	DES_key_schedule sched[3];
-	DES_cblock temp;
-	void (*xfer_l2p)(vtun_info_t *info);
-	void (*xfer_p2l)(vtun_info_t *info);
+	int (*xfer_p2l)(vtun_info_t *info, const struct sockaddr_in *addr);
 };
-
-extern void vtun_3des_decode(vtun_info_t *info, ssize_t *len);
-extern void vtun_3des_encode(vtun_info_t *info, ssize_t *len);
-extern void vtun_dump_iphdr(vtun_info_t *info);
 
 #endif /* __include_vtun_h__ */

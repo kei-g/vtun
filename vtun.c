@@ -1,48 +1,7 @@
 #include "vtun.h"
+
 #include "conf.h"
-
-void vtun_3des(info, len, enc)
-	vtun_info_t *info;
-	ssize_t len;
-	int enc;
-{
-	ssize_t i;
-	for (i = 0; i < len; i += sizeof(info->temp)) {
-		memset(&info->temp, 0, sizeof(info->temp));
-		DES_ecb3_encrypt((DES_cblock *)&info->buf[i], &info->temp,
-			&info->sched[0], &info->sched[1], &info->sched[2], enc);
-		memcpy(&info->buf[i], &info->temp, sizeof(info->temp));
-	}
-}
-
-void vtun_3des_decode(info, len)
-	vtun_info_t *info;
-	ssize_t *len;
-{
-	vtun_3des(info, *len, DES_DECRYPT);
-	*len = ntohs(info->iphdr.ip_len);
-}
-
-void vtun_3des_encode(info, len)
-	vtun_info_t *info;
-	ssize_t *len;
-{
-	*len = (*len + 7) & ~7;
-	vtun_3des(info, *len, DES_ENCRYPT);
-}
-
-void vtun_dump_iphdr(info)
-	vtun_info_t *info;
-{
-#ifdef DEBUG
-	const struct ip *const iphdr = &info->iphdr;
-	(void)printf("LEN=%d,ID=%d,OFF=%d,TTL=%d,PROTO=%d,%s => %s\n",
-		ntohs(iphdr->ip_len), ntohs(iphdr->ip_id),
-		ntohs(iphdr->ip_off), iphdr->ip_ttl, iphdr->ip_p,
-		inet_ntoa_r(iphdr->ip_src, info->name1, sizeof(info->name1)),
-		inet_ntoa_r(iphdr->ip_dst, info->name2, sizeof(info->name2)));
-#endif
-}
+#include "xfer.h"
 
 static void vtun_info_init(info, conf, w)
 	vtun_info_t *info;
@@ -55,7 +14,6 @@ static void vtun_info_init(info, conf, w)
 	info->sock = conf->sock;
 	info->keepalive = conf->mode == VTUN_MODE_CLIENT ? w : NULL;
 	memcpy(info->sched, conf->sched, sizeof(info->sched));
-	info->xfer_l2p = conf->xfer_l2p;
 	info->xfer_p2l = conf->xfer_p2l;
 }
 
@@ -117,7 +75,7 @@ int main(argc, argv)
 		if (n == 0)
 			vtun_keepalive(info);
 		else {
-			func = kev->ident == info->dev ? info->xfer_l2p : info->xfer_p2l;
+			func = kev->ident == info->dev ? vtun_xfer_l2p : vtun_xfer_p2l;
 			memset(info->buf, 0, sizeof(info->buf));
 			(*func)(info);
 		}
