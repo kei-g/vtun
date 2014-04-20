@@ -24,7 +24,7 @@ struct _vtun_info {
 	ssize_t buflen;
 
 	struct sockaddr_in addr;
-	int dev, ignore, sock;
+	int dev, ignore, raw, sock;
 	struct timespec *keepalive;
 #ifdef DEBUG
 	char name1[32], name2[32];
