@@ -15,6 +15,13 @@ static void vtun_dump_iphdr(info)
 }
 #endif
 
+void vtun_xfer_keepalive(info)
+	vtun_info_t *info;
+{
+	uint32_t v = 0;
+	vtun_xfer_raw(info, &v, sizeof(v));
+}
+
 void vtun_xfer_l2p(info)
 	vtun_info_t *info;
 {
@@ -86,4 +93,19 @@ void vtun_xfer_p2l(info)
 #ifdef DEBUG
 	(void)printf("%ld bytes are written.", sent);
 #endif
+}
+
+void vtun_xfer_raw(info, msg, len)
+	vtun_info_t *info;
+	const void *msg;
+	size_t len;
+{
+	ssize_t sent;
+
+	sent = sendto(info->sock, msg, len, 0,
+		(struct sockaddr *)&info->addr, sizeof(info->addr));
+	if (sent < 0) {
+		perror("sendto");
+		exit(1);
+	}
 }

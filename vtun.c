@@ -15,21 +15,9 @@ static void vtun_info_init(info, conf, w)
 	info->keepalive = conf->mode == VTUN_MODE_CLIENT ? w : NULL;
 	memcpy(info->sched, conf->sched, sizeof(info->sched));
 	info->xfer_p2l = conf->xfer_p2l;
-}
 
-static void vtun_keepalive(info)
-	vtun_info_t *info;
-{
-	uint8_t buf[4];
-	ssize_t len;
-
-	memset(buf, 0, sizeof(buf));
-	len = sendto(info->sock, buf, sizeof(buf), 0,
-		(struct sockaddr *)&info->addr, sizeof(info->addr));
-	if (len < 0) {
-		perror("sendto");
-		exit(1);
-	}
+	if (conf->mode == VTUN_MODE_CLIENT)
+		vtun_xfer_keepalive(info);
 }
 
 int main(argc, argv)
@@ -73,7 +61,7 @@ int main(argc, argv)
 			exit(1);
 		}
 		if (n == 0)
-			vtun_keepalive(info);
+			vtun_xfer_keepalive(info);
 		else {
 			func = kev->ident == info->dev ? vtun_xfer_l2p : vtun_xfer_p2l;
 			(*func)(info);
