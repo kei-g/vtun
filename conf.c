@@ -110,6 +110,24 @@ static void vtun_conf_read_key(conf, value)
 		DES_set_key_checked(&key[i], &conf->sched[i]);
 }
 
+static void vtun_conf_read_route(conf, value)
+	vtun_conf_t *conf;
+	char *value;
+{
+	vtun_route_t *r;
+
+	r = (vtun_route_t *)malloc(sizeof(*r));
+	if (!r) {
+		perror("malloc");
+		exit(1);
+	}
+
+	strcpy(r->dst, value);
+
+	r->next = conf->routes;
+	conf->routes = r;
+}
+
 typedef struct {
 	const char *name;
 	void (*func)(vtun_conf_t *conf, char *value);
@@ -121,6 +139,7 @@ static const vtun_conf_read_t handlers[] = {
 	{ "device", vtun_conf_read_device },
 	{ "ifaddr", vtun_conf_read_ifaddr },
 	{ "key", vtun_conf_read_key },
+	{ "route", vtun_conf_read_route },
 	{ NULL, NULL },
 };
 
@@ -131,7 +150,8 @@ void vtun_conf_init(conf, path)
 	int fd;
 	char buf[512], *lp, *t, *key, *value, dev_name[24];
 	ssize_t len;
-	const vtun_conf_read_t *r;
+	const vtun_conf_read_t *c;
+	vtun_route_t *r, *next;
 
 	if ((fd = open(path, O_RDONLY)) < 0) {
 		perror("open");
@@ -154,9 +174,9 @@ void vtun_conf_init(conf, path)
 
 	for (lp = strtok_r(buf, "\n", &t); lp; lp = strtok_r(NULL, "\n", &t)) {
 		key = strtok_r(lp, "=", &value);
-		for (r = handlers; r->name; r++)
-			if (strcmp(key, r->name) == 0) {
-				(*r->func)(conf, value);
+		for (c = handlers; c->name; c++)
+			if (strcmp(key, c->name) == 0) {
+				(*c->func)(conf, value);
 				break;
 			}
 	}
@@ -187,4 +207,11 @@ void vtun_conf_init(conf, path)
 		exit(1);
 	}
 	vtun_sig_add_interface_by_device(conf->dev);
+
+	for (r = conf->routes; r; r = next) {
+		next = r->next;
+		vtun_ioctl_add_route(r->dst, conf->ifa_dst);
+		free(r);
+	}
+	conf->routes = NULL;
 }

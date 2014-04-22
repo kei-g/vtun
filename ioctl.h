@@ -5,6 +5,7 @@
 
 void vtun_ioctl_add_ifaddr(const char *ifr_name,
 	const char *src, uint32_t mask, const char *dst);
+void vtun_ioctl_add_route(const char *dst, const char *gw);
 void vtun_ioctl_create_interface(const char *dev_type, char *ifr_name);
 void vtun_ioctl_destroy_interface(const char *ifr_name);
 

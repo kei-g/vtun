@@ -3,8 +3,10 @@
 
 #include <net/if.h>
 #include <sys/ioctl.h>
+#include <sys/wait.h>
 
 #define INET(p, a) \
+	memset(p, 0, sizeof(struct sockaddr_in)); \
 	((struct sockaddr_in *)(p))->sin_len = sizeof(struct sockaddr_in); \
 	((struct sockaddr_in *)(p))->sin_family = AF_INET; \
 	((struct sockaddr_in *)(p))->sin_addr.s_addr = (a);
@@ -39,6 +41,28 @@ void vtun_ioctl_add_ifaddr(ifr_name, src, netmask, dst)
 	}
 
 	close(sock);
+}
+
+void vtun_ioctl_add_route(dst, gw)
+	const char *dst;
+	const char *gw;
+{
+	pid_t pid;
+	int status;
+
+	pid = fork();
+	if (pid < 0) {
+		perror("fork");
+		exit(1);
+	}
+
+	if (pid == 0) {
+		status = execl("/sbin/route", "-n", "add", dst, gw, NULL);
+		if (status < 0)
+			perror("execl");
+		exit(status);
+	} else
+		waitpid(pid, &status, 0);
 }
 
 void vtun_ioctl_create_interface(dev_type, ifr_name)
