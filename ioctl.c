@@ -31,7 +31,7 @@ void vtun_ioctl_add_ifaddr(ifr_name, src, netmask, dst)
 	}
 
 	memset(&ifr, 0, sizeof(ifr));
-	strcpy(ifr.ifra_name, ifr_name);
+	strncpy(ifr.ifra_name, ifr_name, sizeof(ifr.ifra_name));
 	INET(addr, inet_addr(src));
 	INET(mask, MASK2ADDR(netmask));
 	INET(dest, inet_addr(dst));
@@ -78,12 +78,12 @@ void vtun_ioctl_create_interface(dev_type, ifr_name)
 	}
 
 	memset(&ifr, 0, sizeof(ifr));
-	strcpy(ifr.ifr_name, dev_type);
+	strncpy(ifr.ifr_name, dev_type, sizeof(ifr.ifr_name));
 	if (ioctl(sock, SIOCIFCREATE2, &ifr) < 0) {
 		perror("ioctl SIOCIFCREATE2");
 		exit(1);
 	}
-	strcpy(ifr_name, ifr.ifr_name);
+	strncpy(ifr_name, ifr.ifr_name, sizeof(ifr_name));
 
 	close(sock);
 }
@@ -100,7 +100,7 @@ void vtun_ioctl_destroy_interface(ifr_name)
 	}
 
 	memset(&ifr, 0, sizeof(ifr));
-	strcpy(ifr.ifr_name, ifr_name);
+	strncpy(ifr.ifr_name, ifr_name, sizeof(ifr.ifr_name));
 	if (ioctl(sock, SIOCIFDESTROY, &ifr) < 0) {
 		perror("ioctl SIOCIFDESTROY");
 		return;

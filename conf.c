@@ -62,7 +62,7 @@ static void vtun_conf_read_device(conf, value)
 	vtun_conf_t *conf;
 	char *value;
 {
-	strcpy(conf->dev_type, value);
+	strncpy(conf->dev_type, value, sizeof(conf->dev_type));
 }
 
 static void vtun_conf_read_ifaddr(conf, value)
@@ -72,10 +72,10 @@ static void vtun_conf_read_ifaddr(conf, value)
 	char *src, *dst, *mask;
 
 	src = strtok_r(value, " ", &dst);
-	strcpy(conf->ifa_dst, dst);
+	strncpy(conf->ifa_dst, dst, sizeof(conf->ifa_dst));
 
 	src = strtok_r(src, "/", &mask);
-	strcpy(conf->ifa_src, src);
+	strncpy(conf->ifa_src, src, sizeof(conf->ifa_src));
 
 	errno = 0;
 	conf->ifa_mask = strtol(mask, NULL, 10);
@@ -122,7 +122,7 @@ static void vtun_conf_read_route(conf, value)
 		exit(1);
 	}
 
-	strcpy(r->dst, value);
+	strncpy(r->dst, value, sizeof(r->dst));
 
 	r->next = conf->routes;
 	conf->routes = r;
@@ -148,7 +148,7 @@ void vtun_conf_init(conf, path)
 	const char *path;
 {
 	int fd;
-	char buf[512], *lp, *t, *key, *value, dev_name[24];
+	char buf[4096], *lp, *t, *key, *value, dev_name[24];
 	ssize_t len;
 	const vtun_conf_read_t *c;
 	vtun_route_t *r, *next;

@@ -94,7 +94,7 @@ void vtun_sig_add_interface_by_name(ifr_name)
 
 	ifr->next = interfaces;
 	ifr->ifr_type = VTUN_SIG_NAME;
-	strcpy(ifr->ifr_name, ifr_name);
+	strncpy(ifr->ifr_name, ifr_name, sizeof(ifr->ifr_name));
 
 	interfaces = ifr;
 
