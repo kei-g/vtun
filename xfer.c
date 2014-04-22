@@ -79,23 +79,11 @@ void vtun_xfer_p2l(info)
 	vtun_dump_iphdr(info);
 #endif
 
-	info->iphdr->ip_len = ntohs(info->iphdr->ip_len);
-	info->iphdr->ip_off = ntohs(info->iphdr->ip_off);
-	info->iphdr->ip_ttl--;
-	info->iphdr->ip_sum = 0;
-
-	addr.sin_len = sizeof(addr);
-	addr.sin_family = AF_INET;
-	addr.sin_port = 0;
-	addr.sin_addr = info->iphdr->ip_dst;
-	memset(addr.sin_zero, 0, sizeof(addr.sin_zero));
-	sent = sendto(info->raw, info->buf, info->buflen, 0,
-		(struct sockaddr *)&addr, sizeof(addr));
-	if (sent < 0) {
-		perror("sendto");
+	if ((sent = write(info->dev, info->buf, info->buflen)) < 0) {
+		perror("write");
 		exit(1);
 	}
 #ifdef DEBUG
-	(void)printf("%ld bytes are sent to %s\n", sent, inet_ntoa(addr.sin_addr));
+	(void)printf("%ld bytes are written.", sent);
 #endif
 }

@@ -8,23 +8,9 @@ static void vtun_info_init(info, conf, w)
 	const vtun_conf_t *conf;
 	struct timespec *w;
 {
-	int raw, on;
-
-	if ((raw = socket(AF_INET, SOCK_RAW, IPPROTO_RAW)) < 0) {
-		perror("socket");
-		exit(1);
-	}
-
-	on = 1;
-	if (setsockopt(raw, IPPROTO_IP, IP_HDRINCL, &on, sizeof(on)) < 0) {
-		perror("setsockopt");
-		exit(1);
-	}
-
 	info->addr = conf->addr;
 	info->dev = conf->dev;
 	info->ignore = conf->mode == VTUN_MODE_SERVER;
-	info->raw = raw;
 	info->sock = conf->sock;
 	info->keepalive = conf->mode == VTUN_MODE_CLIENT ? w : NULL;
 	memcpy(info->sched, conf->sched, sizeof(info->sched));
