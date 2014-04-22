@@ -83,7 +83,7 @@ void vtun_ioctl_create_interface(dev_type, ifr_name)
 		perror("ioctl SIOCIFCREATE2");
 		exit(1);
 	}
-	strncpy(ifr_name, ifr.ifr_name, sizeof(ifr_name));
+	strcpy(ifr_name, ifr.ifr_name);
 
 	close(sock);
 }
