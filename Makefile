@@ -3,7 +3,7 @@ CFLAGS=-O3 -Wall -Werror
 LDFLAGS=-Wl,-s
 LIBS=-lssl
 TARGETS=vtun
-OBJS=3des.o client.o conf.o ioctl.o server.o sig.o vtun.o xfer.o
+OBJS=3des.o base64.o client.o conf.o ioctl.o server.o sig.o vtun.o xfer.o
 
 all: $(TARGETS)
 

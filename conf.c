@@ -1,5 +1,6 @@
 #include "conf.h"
 
+#include "3des.h"
 #include "client.h"
 #include "server.h"
 #include "ioctl.h"
@@ -89,22 +90,16 @@ static void vtun_conf_read_key(conf, value)
 	vtun_conf_t *conf;
 	char *value;
 {
+	vtun_base64_t b;
 	DES_cblock key[3];
-	char *t;
-	long v;
-	uint8_t *p = (uint8_t *)key;
 	ssize_t i;
 
+	b = vtun_base64_alloc();
+
 	memset(key, 0, sizeof(key));
-	for (t = value; *t;) {
-		errno = 0;
-		v = strtol(t, &t, 16);
-		if (errno != 0) {
-			perror("strtol");
-			exit(1);
-		}
-		*p++ = (uint8_t)v;
-	}
+	vtun_3des_decode_key(b, key, value);
+
+	vtun_base64_free(&b);
 
 	for (i = 0; i < sizeof(key) / sizeof(key[0]); i++)
 		DES_set_key_checked(&key[i], &conf->sched[i]);
