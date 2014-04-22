@@ -67,5 +67,9 @@ void vtun_3des_decode_key(b, key, msg)
 		*d++ = ((p[5] & 0x3f) << 2) | ((p[6] & 0x80) >> 6);
 		*d++ = ((p[6] & 0x7f) << 1);
 		DES_set_odd_parity(&key[i]);
+		if (DES_is_weak_key(&key[i])) {
+			(void)fprintf(stderr, "Specified key is too weak.\n");
+			exit(1);
+		}
 	}
 }
