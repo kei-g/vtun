@@ -76,7 +76,6 @@ int main(argc, argv)
 			vtun_keepalive(info);
 		else {
 			func = kev->ident == info->dev ? vtun_xfer_l2p : vtun_xfer_p2l;
-			memset(info->buf, 0, sizeof(info->buf));
 			(*func)(info);
 		}
 	}

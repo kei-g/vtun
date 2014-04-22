@@ -1,5 +1,5 @@
 CC=clang
-CFLAGS=-O3 -Wall -Werror -DDEBUG
+CFLAGS=-O3 -Wall -Werror
 LDFLAGS=-Wl,-s
 LIBS=-lssl
 TARGETS=vtun
