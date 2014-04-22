@@ -15,3 +15,7 @@ $(TARGETS): $(OBJS)
 
 clean:
 	rm -f $(TARGETS) $(OBJS)
+
+install: $(TARGETS)
+	cp $(TARGETS) /usr/local/sbin/
+	make clean

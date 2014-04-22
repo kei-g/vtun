@@ -54,7 +54,7 @@ int main(argc, argv)
 		exit(1);
 	}
 
-	vtun_conf_init(&conf, "vtun.conf");
+	vtun_conf_init(&conf, argc < 2 ? "/usr/local/etc/vtun.conf" : argv[1]);
 
 	w.tv_sec = 30;
 	w.tv_nsec = 0;
