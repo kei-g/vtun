@@ -19,7 +19,8 @@ typedef struct _vtun_info vtun_info_t;
 struct _vtun_info {
 	union {
 		uint8_t buf[65536];
-		struct ip iphdr;
+		DES_cblock cb[1];
+		struct ip iphdr[1];
 	};
 	ssize_t buflen;
 

@@ -5,7 +5,7 @@
 static void vtun_dump_iphdr(info)
 	vtun_info_t *info;
 {
-	const struct ip *const iphdr = &info->iphdr;
+	const struct ip *const iphdr = info->iphdr;
 	(void)printf("LEN=%u,ID=%u,F=%0x,OFF=%u,TTL=%u,PROTO=%u,%s => %s\n",
 		ntohs(iphdr->ip_len), ntohs(iphdr->ip_id),
 		ntohs(iphdr->ip_off) >> 13, ntohs(iphdr->ip_off) & 0x1fff,
@@ -79,15 +79,15 @@ void vtun_xfer_p2l(info)
 	vtun_dump_iphdr(info);
 #endif
 
-	info->iphdr.ip_len = ntohs(info->iphdr.ip_len);
-	info->iphdr.ip_off = ntohs(info->iphdr.ip_off);
-	info->iphdr.ip_ttl--;
-	info->iphdr.ip_sum = 0;
+	info->iphdr->ip_len = ntohs(info->iphdr->ip_len);
+	info->iphdr->ip_off = ntohs(info->iphdr->ip_off);
+	info->iphdr->ip_ttl--;
+	info->iphdr->ip_sum = 0;
 
 	addr.sin_len = sizeof(addr);
 	addr.sin_family = AF_INET;
 	addr.sin_port = 0;
-	addr.sin_addr = info->iphdr.ip_dst;
+	addr.sin_addr = info->iphdr->ip_dst;
 	memset(addr.sin_zero, 0, sizeof(addr.sin_zero));
 	sent = sendto(info->raw, info->buf, info->buflen, 0,
 		(struct sockaddr *)&addr, sizeof(addr));
