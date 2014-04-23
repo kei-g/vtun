@@ -91,7 +91,7 @@ void vtun_xfer_p2l(info)
 		exit(1);
 	}
 #ifdef DEBUG
-	(void)printf("%ld bytes are written.", sent);
+	(void)printf("%ld bytes are written.\n", sent);
 #endif
 }
 
