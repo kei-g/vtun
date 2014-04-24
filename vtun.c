@@ -20,33 +20,17 @@ static void vtun_info_init(info, conf, w)
 		vtun_xfer_keepalive(info);
 }
 
-int main(argc, argv)
-	int argc;
-	char *argv[];
-{
-	vtun_conf_t conf;
+static void vtun_main(info)
 	vtun_info_t *info;
-	struct timespec w;
+{
 	int kq, n;
 	struct kevent kev[2];
 	void (*func)(vtun_info_t *info);
-
-	info = (vtun_info_t *)malloc(sizeof(*info));
-	if (!info) {
-		perror("malloc");
-		exit(1);
-	}
 
 	if ((kq = kqueue()) < 0) {
 		perror("kqueue");
 		exit(1);
 	}
-
-	vtun_conf_init(&conf, argc < 2 ? "/usr/local/etc/vtun.conf" : argv[1]);
-
-	w.tv_sec = 30;
-	w.tv_nsec = 0;
-	vtun_info_init(info, &conf, &w);
 
 	EV_SET(&kev[0], info->dev, EVFILT_READ, EV_ADD, 0, 0, NULL);
 	EV_SET(&kev[1], info->sock, EVFILT_READ, EV_ADD, 0, 0, NULL);
@@ -61,12 +45,34 @@ int main(argc, argv)
 			exit(1);
 		}
 		if (n == 0)
-			vtun_xfer_keepalive(info);
-		else {
+			func = vtun_xfer_keepalive;
+		else
 			func = kev->ident == info->dev ? vtun_xfer_l2p : vtun_xfer_p2l;
-			(*func)(info);
-		}
+		(*func)(info);
 	}
+}
+
+int main(argc, argv)
+	int argc;
+	char *argv[];
+{
+	vtun_conf_t conf;
+	vtun_info_t *info;
+	struct timespec w;
+
+	info = (vtun_info_t *)malloc(sizeof(*info));
+	if (!info) {
+		perror("malloc");
+		exit(1);
+	}
+
+	vtun_conf_init(&conf, argc < 2 ? "/usr/local/etc/vtun.conf" : argv[1]);
+
+	w.tv_sec = 30;
+	w.tv_nsec = 0;
+	vtun_info_init(info, &conf, &w);
+
+	vtun_main(info);
 
 	return (0);
 }
