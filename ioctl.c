@@ -13,7 +13,7 @@
 
 #define MASK2ADDR(n) htonl(0xffffffff ^ (n < 32 ? ((1 << (32 - n)) - 1) : 0))
 
-void vtun_ioctl_add_ifaddr(ifr_name, src, netmask, dst)
+void ioctl_add_ifaddr(ifr_name, src, netmask, dst)
 	const char *ifr_name;
 	const char *src;
 	uint32_t netmask;
@@ -43,7 +43,7 @@ void vtun_ioctl_add_ifaddr(ifr_name, src, netmask, dst)
 	close(sock);
 }
 
-void vtun_ioctl_add_route(dst, gw)
+void ioctl_add_route(dst, gw)
 	const char *dst;
 	const char *gw;
 {
@@ -65,7 +65,7 @@ void vtun_ioctl_add_route(dst, gw)
 		waitpid(pid, &status, 0);
 }
 
-void vtun_ioctl_create_interface(dev_type, ifr_name)
+void ioctl_create_interface(dev_type, ifr_name)
 	const char *dev_type;
 	char *ifr_name;
 {
@@ -88,7 +88,7 @@ void vtun_ioctl_create_interface(dev_type, ifr_name)
 	close(sock);
 }
 
-void vtun_ioctl_destroy_interface(ifr_name)
+void ioctl_destroy_interface(ifr_name)
 	const char *ifr_name;
 {
 	int sock;

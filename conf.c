@@ -189,10 +189,10 @@ void vtun_conf_init(conf, path)
 		exit(1);
 	}
 
-	vtun_ioctl_create_interface(conf->dev_type, conf->ifr_name);
+	ioctl_create_interface(conf->dev_type, conf->ifr_name);
 	vtun_sig_init();
 	vtun_sig_add_interface_by_name(conf->ifr_name);
-	vtun_ioctl_add_ifaddr(conf->ifr_name, conf->ifa_src,
+	ioctl_add_ifaddr(conf->ifr_name, conf->ifa_src,
 		conf->ifa_mask, conf->ifa_dst);
 
 	sprintf(dev_name, "/dev/%s", conf->ifr_name);
@@ -205,7 +205,7 @@ void vtun_conf_init(conf, path)
 
 	for (r = conf->routes; r; r = next) {
 		next = r->next;
-		vtun_ioctl_add_route(r->dst, conf->ifa_dst);
+		ioctl_add_route(r->dst, conf->ifa_dst);
 		free(r);
 	}
 	conf->routes = NULL;
