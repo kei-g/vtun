@@ -90,16 +90,16 @@ static void vtun_conf_read_key(conf, value)
 	vtun_conf_t *conf;
 	char *value;
 {
-	vtun_base64_t b;
+	base64_t b;
 	DES_cblock key[3];
 	ssize_t i;
 
-	b = vtun_base64_alloc();
+	b = base64_alloc();
 
 	memset(key, 0, sizeof(key));
 	vtun_3des_decode_key(b, key, value);
 
-	vtun_base64_free(&b);
+	base64_free(&b);
 
 	for (i = 0; i < sizeof(key) / sizeof(key[0]); i++)
 		DES_set_key_checked(&key[i], &conf->sched[i]);

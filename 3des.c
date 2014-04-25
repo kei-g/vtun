@@ -27,7 +27,7 @@ void vtun_3des_encode(info)
 }
 
 char *vtun_3des_string_of_key(b, key)
-	vtun_base64_t b;
+	base64_t b;
 	DES_cblock key[3];
 {
 	ssize_t i;
@@ -43,11 +43,11 @@ char *vtun_3des_string_of_key(b, key)
 		*p++ = ((k[5] << 5) & 0xc0) | ((k[6] >> 2) & 0x3f);
 		*p++ = ((k[6] << 6) & 0x80) | ((k[7] >> 1) & 0x7f);
 	}
-	return vtun_base64_encode(b, buf, sizeof(buf));
+	return base64_encode(b, buf, sizeof(buf));
 }
 
 void vtun_3des_decode_key(b, key, msg)
-	vtun_base64_t b;
+	base64_t b;
 	DES_cblock key[3];
 	const char *msg;
 {
@@ -55,7 +55,7 @@ void vtun_3des_decode_key(b, key, msg)
 	ssize_t i;
 
 	memset(k, 0, sizeof(k));
-	vtun_base64_decode(b, k, msg);
+	base64_decode(b, k, msg);
 
 	for (i = 0, p = k, d = (uint8_t *)key; i < 3; i++, p += 7) {
 		*d++ = (p[0] & 0xfe);

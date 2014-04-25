@@ -3,18 +3,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-struct _vtun_base64 {
+struct _base64 {
 	uint8_t tbl[256];
 	char w[65];
 };
 
-vtun_base64_t vtun_base64_alloc(void)
+base64_t base64_alloc(void)
 {
-	vtun_base64_t b;
+	base64_t b;
 	ssize_t i;
 	char c;
 
-	b = (vtun_base64_t)malloc(sizeof(*b));
+	b = (base64_t)malloc(sizeof(*b));
 	if (!b) {
 		perror("malloc");
 		exit(1);
@@ -36,10 +36,10 @@ vtun_base64_t vtun_base64_alloc(void)
 	return (b);
 }
 
-void vtun_base64_free(pb)
-	vtun_base64_t *pb;
+void base64_free(pb)
+	base64_t *pb;
 {
-	vtun_base64_t b;
+	base64_t b;
 
 	b = *pb;
 	*pb = NULL;
@@ -48,8 +48,8 @@ void vtun_base64_free(pb)
 		free(b);
 }
 
-ssize_t vtun_base64_decode(b, buf, msg)
-	vtun_base64_t b;
+ssize_t base64_decode(b, buf, msg)
+	base64_t b;
 	void *buf;
 	const char *msg;
 {
@@ -69,8 +69,8 @@ ssize_t vtun_base64_decode(b, buf, msg)
 	return (k);
 }
 
-char *vtun_base64_encode(b, buf, len)
-	vtun_base64_t b;
+char *base64_encode(b, buf, len)
+	base64_t b;
 	const void *buf;
 	size_t len;
 {
