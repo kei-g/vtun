@@ -23,7 +23,7 @@ static void vtun_info_init(info, conf, w)
 static void vtun_main(info)
 	vtun_info_t *info;
 {
-	int kq, n;
+	int kq, n = 0;
 	struct kevent kev[2];
 	void (*func)(vtun_info_t *info);
 
@@ -32,15 +32,10 @@ static void vtun_main(info)
 		exit(1);
 	}
 
-	EV_SET(&kev[0], info->dev, EVFILT_READ, EV_ADD, 0, 0, NULL);
-	EV_SET(&kev[1], info->sock, EVFILT_READ, EV_ADD, 0, 0, NULL);
-	if (kevent(kq, kev, sizeof(kev) / sizeof(kev[0]), NULL, 0, NULL) < 0) {
-		perror("kevent");
-		exit(1);
-	}
-
+	EV_SET(&kev[n++], info->dev, EVFILT_READ, EV_ADD, 0, 0, NULL);
+	EV_SET(&kev[n++], info->sock, EVFILT_READ, EV_ADD, 0, 0, NULL);
 	for (;;) {
-		if ((n = kevent(kq, NULL, 0, kev, 1, info->keepalive)) < 0) {
+		if ((n = kevent(kq, kev, n, kev, 1, info->keepalive)) < 0) {
 			perror("kevent");
 			exit(1);
 		}
@@ -49,6 +44,7 @@ static void vtun_main(info)
 		else
 			func = kev->ident == info->dev ? vtun_xfer_l2p : vtun_xfer_p2l;
 		(*func)(info);
+		n = 0;
 	}
 }
 
