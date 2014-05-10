@@ -32,7 +32,7 @@ void vtun_xfer_l2p(info)
 		exit(1);
 	}
 #ifdef DEBUG
-	(void)printf("%ld bytes are read.\n", info->buflen);
+	(void)printf("%zd bytes are read.\n", info->buflen);
 #endif
 
 	if (info->buflen < sizeof(info->iphdr))
@@ -54,7 +54,7 @@ void vtun_xfer_l2p(info)
 		exit(1);
 	}
 #ifdef DEBUG
-	(void)printf("%ld bytes are sent to %s:%d.\n", sent,
+	(void)printf("%zd bytes are sent to %s:%d.\n", sent,
 		inet_ntoa(info->addr.sin_addr), ntohs(info->addr.sin_port));
 #endif
 }
@@ -74,7 +74,7 @@ void vtun_xfer_p2l(info)
 		exit(1);
 	}
 #ifdef DEBUG
-	(void)printf("%ld bytes are received from %s:%d.\n", info->buflen,
+	(void)printf("%zd bytes are received from %s:%d.\n", info->buflen,
 		inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
 #endif
 
@@ -91,7 +91,7 @@ void vtun_xfer_p2l(info)
 		exit(1);
 	}
 #ifdef DEBUG
-	(void)printf("%ld bytes are written.\n", sent);
+	(void)printf("%zd bytes are written.\n", sent);
 #endif
 }
 
