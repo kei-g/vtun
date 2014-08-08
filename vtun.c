@@ -79,6 +79,7 @@ int main(argc, argv)
 {
 	char *bn, *confpath = NULL, *pidpath = NULL;
 	int opt;
+	pid_t pid;
 	vtun_conf_t conf;
 	vtun_info_t *info;
 	struct timespec w;
@@ -87,8 +88,16 @@ int main(argc, argv)
 	if (strcmp(bn, "vtun-keygen") == 0)
 		return vtun_bn_generate_key();
 
-	while ((opt = getopt(argc, argv, "c:p:")) != -1)
+	while ((opt = getopt(argc, argv, "bc:p:")) != -1)
 		switch (opt) {
+		case 'b':
+			if ((pid = fork()) < 0) {
+				perror("fork");
+				exit(EXIT_FAILURE);
+			}
+			if (pid != 0)
+				return (0);
+			break;
 		case 'c':
 			confpath = strdup(optarg);
 			break;
@@ -110,7 +119,7 @@ int main(argc, argv)
 			(void)fprintf(stderr, "Unable to create %s\n", pidpath);
 			exit(EXIT_FAILURE);
 		}
-		dprintf(fd, "%zd", getpid());
+		dprintf(fd, "%d", getpid());
 		close(fd);
 		free(pidpath);
 	}
