@@ -1,0 +1,20 @@
+#!/bin/sh
+PIDFILE=/var/run/vtun.pid
+
+case "$1" in
+start)
+	if [ -f "$PIFDILE" ]; then
+		echo "Already running."
+		exit 64
+	fi
+	/usr/local/sbin/vtun -b -c /usr/local/etc/vtun/vtun.conf -p "$PIDFILE"
+	;;
+stop)
+	if [ -f "$PIDFILE" ]; then
+		kill -INT `cat "$PIDFILE"`
+		rm -f "$PIDFILE"
+	fi
+	;;
+esac
+
+exit 0
