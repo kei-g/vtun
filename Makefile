@@ -1,5 +1,5 @@
 CC=clang
-CFLAGS=-O3 -Wall -Werror -march=corei7 -msse4 -maes
+CFLAGS=-O3 -Wall -Werror -D_WITH_DPRINTF -march=corei7 -msse4 -maes
 LDFLAGS=-Wl,-s
 LIBS=-lssl
 TARGETS=vtun

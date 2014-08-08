@@ -77,33 +77,49 @@ int main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	char *bn, *confpath = NULL;
+	char *bn, *confpath = NULL, *pidpath = NULL;
 	int opt;
-	vtun_info_t *info;
 	vtun_conf_t conf;
+	vtun_info_t *info;
 	struct timespec w;
 
 	bn = basename(*argv);
 	if (strcmp(bn, "vtun-keygen") == 0)
 		return vtun_bn_generate_key();
 
-	while ((opt = getopt(argc, argv, "c:")) != -1)
+	while ((opt = getopt(argc, argv, "c:p:")) != -1)
 		switch (opt) {
 		case 'c':
 			confpath = strdup(optarg);
 			break;
+		case 'p':
+			pidpath = strdup(optarg);
+			break;
 		}
+
+	if (!confpath)
+		confpath = strdup("/usr/local/etc/vtun/vtun.conf");
+	vtun_conf_init(&conf, confpath);
+	free(confpath);
+
+	if (pidpath) {
+		int fd;
+		fd = open(pidpath, O_CREAT | O_TRUNC | O_WRONLY, 0644);
+		if (fd < 0) {
+			perror("open");
+			(void)fprintf(stderr, "Unable to create %s\n", pidpath);
+			exit(EXIT_FAILURE);
+		}
+		dprintf(fd, "%zd", getpid());
+		close(fd);
+		free(pidpath);
+	}
 
 	info = (vtun_info_t *)malloc(sizeof(*info));
 	if (!info) {
 		perror("malloc");
 		exit(1);
 	}
-
-	if (!confpath)
-		confpath = strdup("/usr/local/etc/vtun/vtun.conf");
-	vtun_conf_init(&conf, confpath);
-	free(confpath);
 
 	w.tv_sec = 30;
 	w.tv_nsec = 0;
