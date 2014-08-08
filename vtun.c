@@ -1,5 +1,10 @@
 #include "vtun.h"
 
+#include <libgen.h>
+#include <sys/param.h>
+
+#include "3des.h"
+#include "base64.h"
 #include "conf.h"
 #include "xfer.h"
 
@@ -20,7 +25,7 @@ static void vtun_info_init(info, conf, w)
 		vtun_xfer_keepalive(info);
 }
 
-static void vtun_main(info)
+static int vtun_main(info)
 	vtun_info_t *info;
 {
 	int kq, n = 0;
@@ -46,15 +51,40 @@ static void vtun_main(info)
 		(*func)(info);
 		n = 0;
 	}
+
+	return (0);
+}
+
+static int vtun_bn_generate_key(void)
+{
+	DES_cblock key[3];
+	base64_t b;
+	char *msg;
+
+	vtun_3des_generate_key(key);
+
+	b = base64_alloc();
+	msg = vtun_3des_string_of_key(b, key);
+	base64_free(&b);
+
+	printf("%s\n", msg);
+	free(msg);
+
+	return (0);
 }
 
 int main(argc, argv)
 	int argc;
 	char *argv[];
 {
+	char *bn;
 	vtun_conf_t conf;
 	vtun_info_t *info;
 	struct timespec w;
+
+	bn = basename(*argv);
+	if (strcmp(bn, "vtun-keygen") == 0)
+		return vtun_bn_generate_key();
 
 	info = (vtun_info_t *)malloc(sizeof(*info));
 	if (!info) {
@@ -68,7 +98,5 @@ int main(argc, argv)
 	w.tv_nsec = 0;
 	vtun_info_init(info, &conf, &w);
 
-	vtun_main(info);
-
-	return (0);
+	return vtun_main(info);
 }

@@ -73,3 +73,14 @@ void vtun_3des_decode_key(b, key, msg)
 		}
 	}
 }
+
+void vtun_3des_generate_key(key)
+	DES_cblock key[3];
+{
+	ssize_t i;
+
+	for (i = 0; i < 3; i++)
+		do {
+			DES_random_key(&key[i]);
+		} while (DES_is_weak_key(&key[i]));
+}
