@@ -77,14 +77,22 @@ int main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	char *bn;
-	vtun_conf_t conf;
+	char *bn, *confpath = NULL;
+	int opt;
 	vtun_info_t *info;
+	vtun_conf_t conf;
 	struct timespec w;
 
 	bn = basename(*argv);
 	if (strcmp(bn, "vtun-keygen") == 0)
 		return vtun_bn_generate_key();
+
+	while ((opt = getopt(argc, argv, "c:")) != -1)
+		switch (opt) {
+		case 'c':
+			confpath = strdup(optarg);
+			break;
+		}
 
 	info = (vtun_info_t *)malloc(sizeof(*info));
 	if (!info) {
@@ -92,7 +100,10 @@ int main(argc, argv)
 		exit(1);
 	}
 
-	vtun_conf_init(&conf, argc < 2 ? "/usr/local/etc/vtun.conf" : argv[1]);
+	if (!confpath)
+		confpath = strdup("/usr/local/etc/vtun/vtun.conf");
+	vtun_conf_init(&conf, confpath);
+	free(confpath);
 
 	w.tv_sec = 30;
 	w.tv_nsec = 0;

@@ -26,5 +26,6 @@ clean:
 
 install: $(TARGETS)
 	cp $(TARGETS) /usr/local/sbin/
+	rm -f /usr/local/sbin/$(TARGETS)-keygen
 	ln /usr/local/sbin/$(TARGETS) /usr/local/sbin/$(TARGETS)-keygen
 	make clean
