@@ -36,6 +36,12 @@ static void vtun_sigint(sig)
 	exit(1);
 }
 
+static void vtun_sigterm(sig)
+	int sig;
+{
+	exit(1);
+}
+
 static void vtun_sig_destroy_interfaces(void)
 {
 	vtun_sig_interface_t *ifr, *next;
@@ -59,6 +65,7 @@ void vtun_sig_init(void)
 	interfaces = NULL;
 	signal(SIGHUP, vtun_sighup);
 	signal(SIGINT, vtun_sigint);
+	signal(SIGTERM, vtun_sigterm);
 }
 
 void vtun_sig_add_interface_by_device(dev)
