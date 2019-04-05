@@ -1,0 +1,17 @@
+#!/bin/sh
+
+. /etc/rc.subr
+
+name=vtun
+rcvar=vtun_enable
+
+load_rc_config $name
+: ${vtun_enable:=no}
+: ${vtun_conf="/usr/local/etc/vtun/vtun.conf"}
+
+pidfile="/var/run/${name}.pid"
+
+command="/usr/local/sbin/${name}"
+command_args="-b -c ${vtun_conf} -p ${pidfile} > /dev/null 2>&1"
+
+run_rc_command "$1"
