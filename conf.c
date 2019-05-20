@@ -1,7 +1,8 @@
 #include "conf.h"
 
-#include "3des.h"
+#include "base64.h"
 #include "client.h"
+#include "codec.h"
 #include "server.h"
 #include "ioctl.h"
 #include "sig.h"
@@ -86,23 +87,26 @@ static void vtun_conf_read_ifaddr(conf, value)
 	}
 }
 
+static void vtun_conf_read_iv(conf, value)
+	vtun_conf_t *conf;
+	char *value;
+{
+	base64_t b;
+
+	b = base64_alloc();
+	base64_decode(b, conf->iv, value);
+	base64_free(&b);
+}
+
 static void vtun_conf_read_key(conf, value)
 	vtun_conf_t *conf;
 	char *value;
 {
 	base64_t b;
-	DES_cblock key[3];
-	ssize_t i;
 
 	b = base64_alloc();
-
-	memset(key, 0, sizeof(key));
-	vtun_3des_decode_key(b, key, value);
-
+	base64_decode(b, conf->key, value);
 	base64_free(&b);
-
-	for (i = 0; i < sizeof(key) / sizeof(key[0]); i++)
-		DES_set_key_checked(&key[i], &conf->sched[i]);
 }
 
 static void vtun_conf_read_route(conf, value)
@@ -133,6 +137,7 @@ static const vtun_conf_read_t handlers[] = {
 	{ "connect", vtun_conf_read_connect },
 	{ "device", vtun_conf_read_device },
 	{ "ifaddr", vtun_conf_read_ifaddr },
+	{ "iv", vtun_conf_read_iv },
 	{ "key", vtun_conf_read_key },
 	{ "route", vtun_conf_read_route },
 	{ NULL, NULL },

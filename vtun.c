@@ -3,8 +3,8 @@
 #include <libgen.h>
 #include <sys/param.h>
 
-#include "3des.h"
 #include "base64.h"
+#include "codec.h"
 #include "conf.h"
 #include "xfer.h"
 
@@ -18,11 +18,19 @@ static void vtun_info_init(info, conf, w)
 	info->ignore = conf->mode == VTUN_MODE_SERVER;
 	info->sock = conf->sock;
 	info->keepalive = conf->mode == VTUN_MODE_CLIENT ? w : NULL;
-	memcpy(info->sched, conf->sched, sizeof(info->sched));
 	info->xfer_p2l = conf->xfer_p2l;
 
 	if (conf->mode == VTUN_MODE_CLIENT)
 		vtun_xfer_keepalive(info);
+
+	info->dec = EVP_CIPHER_CTX_new();
+	info->enc = EVP_CIPHER_CTX_new();
+	EVP_CIPHER_CTX_init(info->dec);
+	EVP_CIPHER_CTX_init(info->enc);
+	EVP_DecryptInit_ex(info->dec, EVP_aes_256_gcm(),
+		NULL, conf->key, conf->iv);
+	EVP_EncryptInit_ex(info->enc, EVP_aes_256_gcm(),
+		NULL, conf->key, conf->iv);
 }
 
 static int vtun_main(info)
@@ -57,18 +65,21 @@ static int vtun_main(info)
 
 static int vtun_bn_generate_key(void)
 {
-	DES_cblock key[3];
+	unsigned char iv[12], key[32];
 	base64_t b;
 	char *msg;
 
-	vtun_3des_generate_key(key);
+	vtun_generate_iv(iv);
+	vtun_generate_key(key);
 
 	b = base64_alloc();
-	msg = vtun_3des_string_of_key(b, key);
-	base64_free(&b);
-
-	printf("%s\n", msg);
+	msg = base64_encode(b, iv, sizeof(iv));
+	printf("iv: %s\n", msg);
 	free(msg);
+	msg = base64_encode(b, key, sizeof(key));
+	printf("key: %s\n", msg);
+	free(msg);
+	base64_free(&b);
 
 	return (0);
 }

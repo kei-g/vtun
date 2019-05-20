@@ -3,9 +3,9 @@ CFLAGS=-O3 -Wall -Werror -D_WITH_DPRINTF -march=corei7 -msse4 -maes
 LDFLAGS=-Wl,-s
 LIBS=-lssl
 TARGETS=vtun
-OBJS=3des.o \
-	base64.o \
+OBJS=base64.o \
 	client.o \
+	codec.o \
 	conf.o \
 	ioctl.o \
 	server.o \

@@ -1,5 +1,5 @@
+#include "codec.h"
 #include "xfer.h"
-#include "3des.h"
 
 #ifdef DEBUG
 static void vtun_dump_iphdr(info)
@@ -45,7 +45,7 @@ void vtun_xfer_l2p(info)
 	if (info->ignore)
 		return;
 
-	vtun_3des_encode(info);
+	vtun_encode(info);
 
 	sent = sendto(info->sock, info->buf, info->buflen, 0,
 		(struct sockaddr *)&info->addr, sizeof(info->addr));
@@ -81,7 +81,7 @@ void vtun_xfer_p2l(info)
 	if (!(*info->xfer_p2l)(info, &addr))
 		return;
 
-	vtun_3des_decode(info);
+	vtun_decode(info);
 #ifdef DEBUG
 	vtun_dump_iphdr(info);
 #endif
