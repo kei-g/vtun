@@ -1,6 +1,6 @@
-bind=172.16.0.1
+bind=172.16.0.1:8181
 device=tun
-ifaddr=192.168.255.253/30
+ifaddr=192.168.255.253/30 192.168.255.254
 iv=PO7BQKKxS9LFDGIO
 key=l7CMH0YCBQzWFB+iiaijjEZWwj8xN9DCq6LZe2CTQj0=
 route=172.16.1.0/24
