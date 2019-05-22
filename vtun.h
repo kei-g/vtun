@@ -18,8 +18,14 @@ typedef struct _vtun_info vtun_info_t;
 
 struct _vtun_info {
 	union {
-		uint8_t buf[65536];
-		struct ip iphdr[1];
+		uint8_t all[65536];
+		struct {
+			uint8_t cmd;
+			union {
+				uint8_t buf[65535];
+				struct ip iphdr[1];
+			};
+		} obj;
 	};
 	ssize_t buflen;
 
@@ -30,6 +36,7 @@ struct _vtun_info {
 #ifdef DEBUG
 	char name1[32], name2[32];
 #endif
+	uint8_t tmp[65536];
 	int (*xfer_p2l)(vtun_info_t *info, const struct sockaddr_in *addr);
 };
 

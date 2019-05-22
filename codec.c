@@ -6,9 +6,10 @@ void vtun_decode(info)
 	vtun_info_t *info;
 {
 	int buflen, len;
-	buflen = ntohs(info->iphdr->ip_len);
+	buflen = ntohs(info->obj.iphdr->ip_len);
 	len = 0;
-	EVP_DecryptUpdate(info->dec, info->buf, &len, info->buf, buflen);
+	EVP_DecryptUpdate(info->dec, info->obj.buf, &len,
+		info->tmp, buflen);
 	info->buflen = len;
 }
 
@@ -17,7 +18,8 @@ void vtun_encode(info)
 {
 	int len;
 	len = 0;
-	EVP_EncryptUpdate(info->enc, info->buf, &len, info->buf, info->buflen);
+	EVP_EncryptUpdate(info->enc, info->tmp, &len,
+		info->obj.buf, info->buflen);
 }
 
 void vtun_generate_iv(iv)

@@ -5,7 +5,7 @@
 static void vtun_dump_iphdr(info)
 	vtun_info_t *info;
 {
-	const struct ip *const iphdr = info->iphdr;
+	const struct ip *const iphdr = info->obj.iphdr;
 	(void)printf("LEN=%u,ID=%u,F=%0x,OFF=%u,TTL=%u,PROTO=%u,%s => %s\n",
 		ntohs(iphdr->ip_len), ntohs(iphdr->ip_id),
 		ntohs(iphdr->ip_off) >> 13, ntohs(iphdr->ip_off) & 0x1fff,
@@ -27,7 +27,8 @@ void vtun_xfer_l2p(info)
 {
 	ssize_t sent;
 
-	if ((info->buflen = read(info->dev, info->buf, sizeof(info->buf))) < 0) {
+	info->buflen = read(info->dev, info->obj.buf, sizeof(info->obj.buf));
+	if (info->buflen < 0) {
 		perror("read");
 		exit(1);
 	}
@@ -35,7 +36,7 @@ void vtun_xfer_l2p(info)
 	(void)printf("%zd bytes are read.\n", info->buflen);
 #endif
 
-	if (info->buflen < sizeof(info->iphdr))
+	if (info->buflen < sizeof(info->obj.iphdr))
 		return;
 
 #ifdef DEBUG
@@ -47,7 +48,9 @@ void vtun_xfer_l2p(info)
 
 	vtun_encode(info);
 
-	sent = sendto(info->sock, info->buf, info->buflen, 0,
+	info->obj.cmd = 1;
+	info->buflen += sizeof(info->obj.cmd);
+	sent = sendto(info->sock, info->tmp, info->buflen, 0,
 		(struct sockaddr *)&info->addr, sizeof(info->addr));
 	if (sent < 0) {
 		perror("sendto");
@@ -67,7 +70,7 @@ void vtun_xfer_p2l(info)
 	ssize_t sent;
 
 	addrlen = sizeof(addr);
-	info->buflen = recvfrom(info->sock, info->buf, sizeof(info->buf), 0,
+	info->buflen = recvfrom(info->sock, info->tmp, sizeof(info->tmp), 0,
 		(struct sockaddr *)&addr, &addrlen);
 	if (info->buflen < 0) {
 		perror("recvfrom");
@@ -80,13 +83,15 @@ void vtun_xfer_p2l(info)
 
 	if (!(*info->xfer_p2l)(info, &addr))
 		return;
+	info->buflen -= sizeof(info->obj.cmd);
 
 	vtun_decode(info);
 #ifdef DEBUG
 	vtun_dump_iphdr(info);
 #endif
 
-	if ((sent = write(info->dev, info->buf, info->buflen)) < 0) {
+	sent = write(info->dev, info->obj.buf, info->buflen);
+	if (sent < 0) {
 		perror("write");
 		exit(1);
 	}
