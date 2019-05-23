@@ -5,10 +5,10 @@ static void generate_random(uint8_t *buf, size_t bufsize);
 void vtun_decode(info)
 	vtun_info_t *info;
 {
-	int buflen, len;
-	buflen = ntohs(info->obj.iphdr->ip_len);
+	int len;
 	len = 0;
-	EVP_DecryptUpdate(info->dec, info->tmp, &len, info->obj.buf, buflen);
+	EVP_DecryptUpdate(info->dec, info->tmp, &len,
+		info->obj.buf, info->buflen);
 	info->buflen = len;
 }
 
