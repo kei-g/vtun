@@ -27,7 +27,7 @@ void vtun_xfer_l2p(info)
 {
 	ssize_t sent;
 
-	info->buflen = read(info->dev, info->obj.buf, sizeof(info->obj.buf));
+	info->buflen = read(info->dev, info->tmp, sizeof(info->tmp));
 	if (info->buflen < 0) {
 		perror("read");
 		exit(1);
@@ -50,7 +50,7 @@ void vtun_xfer_l2p(info)
 
 	info->obj.cmd = 1;
 	info->buflen += sizeof(info->obj.cmd);
-	sent = sendto(info->sock, info->tmp, info->buflen, 0,
+	sent = sendto(info->sock, info->all, info->buflen, 0,
 		(struct sockaddr *)&info->addr, sizeof(info->addr));
 	if (sent < 0) {
 		perror("sendto");
@@ -70,7 +70,7 @@ void vtun_xfer_p2l(info)
 	ssize_t sent;
 
 	addrlen = sizeof(addr);
-	info->buflen = recvfrom(info->sock, info->tmp, sizeof(info->tmp), 0,
+	info->buflen = recvfrom(info->sock, info->all, sizeof(info->all), 0,
 		(struct sockaddr *)&addr, &addrlen);
 	if (info->buflen < 0) {
 		perror("recvfrom");
@@ -81,7 +81,7 @@ void vtun_xfer_p2l(info)
 		inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
 #endif
 
-	if (!(*info->xfer_p2l)(info, &addr))
+	if (info->obj.cmd != 1 || !(*info->xfer_p2l)(info, &addr))
 		return;
 	info->buflen -= sizeof(info->obj.cmd);
 
@@ -90,7 +90,7 @@ void vtun_xfer_p2l(info)
 	vtun_dump_iphdr(info);
 #endif
 
-	sent = write(info->dev, info->obj.buf, info->buflen);
+	sent = write(info->dev, info->tmp, info->buflen);
 	if (sent < 0) {
 		perror("write");
 		exit(1);
