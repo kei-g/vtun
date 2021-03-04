@@ -1,5 +1,6 @@
 CC=clang
-CFLAGS=-O3 -Wall -Werror -D_WITH_DPRINTF -march=corei7 -msse4 -maes
+CFLAGS=-D _WITH_DPRINTF -O3 -Wall -Werror -march=native
+LD=clang
 LDFLAGS=-Wl,-s
 LIBS=-lssl
 TARGETS=vtun
@@ -16,7 +17,7 @@ OBJS=base64.o \
 all: $(TARGETS)
 
 $(TARGETS): $(OBJS)
-	$(CC) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
+	$(LD) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
 
 .c.o:
 	$(CC) $(CFLAGS) -c $<
