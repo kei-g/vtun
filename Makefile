@@ -2,7 +2,7 @@ CC=clang
 CFLAGS=-D _WITH_DPRINTF -O3 -Wall -Werror -march=native
 LD=clang
 LDFLAGS=-Wl,-s
-LIBS=-lssl
+LIBS=-lcrypto
 TARGETS=vtun
 OBJS=base64.o \
 	client.o \
