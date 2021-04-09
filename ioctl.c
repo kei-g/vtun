@@ -2,8 +2,8 @@
 #include "ioctl.h"
 
 #include <net/if.h>
+#include <net/route.h>
 #include <sys/ioctl.h>
-#include <sys/wait.h>
 
 #define INET(p, a) \
 	memset(p, 0, sizeof(struct sockaddr_in)); \
@@ -47,22 +47,41 @@ void ioctl_add_route(dst, gw)
 	const char *dst;
 	const char *gw;
 {
-	pid_t pid;
-	int status;
+	int sock;
+	struct {
+		struct rt_msghdr hdr;
+		struct sockaddr_in rtm_addrs[3];
+	} msg;
+	char tmp[32], *dstnet, *maskstr, *ep;
+	uint8_t mask;
 
-	pid = fork();
-	if (pid < 0) {
-		perror("fork");
+	if ((sock = socket(PF_ROUTE, SOCK_RAW, 0)) < 0) {
+		perror("unable to add route, socket(PF_ROUTE)");
 		exit(1);
 	}
 
-	if (pid == 0) {
-		status = execl("/sbin/route", "-n", "add", dst, gw, NULL);
-		if (status < 0)
-			perror("execl");
-		exit(status);
-	} else
-		waitpid(pid, &status, 0);
+	memset(&msg, 0, sizeof(msg));
+
+	msg.hdr.rtm_msglen = sizeof(msg);
+	msg.hdr.rtm_version = RTM_VERSION;
+	msg.hdr.rtm_type = RTM_ADD;
+	msg.hdr.rtm_flags = RTF_GATEWAY | RTF_STATIC | RTF_UP;
+	msg.hdr.rtm_addrs = RTA_DST | RTA_GATEWAY | RTA_NETMASK;
+	msg.hdr.rtm_seq = 1;
+
+	strcpy(tmp, dst);
+	dstnet = strtok_r(tmp, "/", &maskstr);
+	mask = (uint8_t)strtoul(maskstr, &ep, 10);
+	INET(&msg.rtm_addrs[RTAX_DST], inet_addr(dstnet));
+	INET(&msg.rtm_addrs[RTAX_GATEWAY], inet_addr(gw));
+	INET(&msg.rtm_addrs[RTAX_NETMASK], MASK2ADDR(mask));
+
+	if (write(sock, &msg, sizeof(msg)) < 0) {
+		perror("failed to add route, write(PF_ROUTE)");
+		exit(1);
+	}
+
+	close(sock);
 }
 
 void ioctl_create_interface(dev_type, ifr_name)
