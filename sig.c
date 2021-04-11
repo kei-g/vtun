@@ -57,7 +57,9 @@ static void vtun_sig_destroy_interfaces(void)
 			close(ifr->ifr_device);
 			break;
 		case VTUN_SIG_NAME:
+#if defined(__FreeBSD__)
 			ioctl_destroy_interface(ifr->ifr_name);
+#endif
 			break;
 		}
 		free(ifr);

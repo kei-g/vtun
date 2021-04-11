@@ -202,6 +202,7 @@ void vtun_conf_init(conf, path)
 		exit(1);
 	}
 
+#if defined(__FreeBSD__)
 	ioctl_create_interface(conf->dev_type, conf->ifr_name);
 	vtun_sig_init();
 	vtun_sig_add_interface_by_name(conf->ifr_name);
@@ -214,6 +215,12 @@ void vtun_conf_init(conf, path)
 		(void)fprintf(stderr, "Unable to open %s\n", dev_name);
 		exit(1);
 	}
+#elif defined(__linux__)
+	conf->dev = ioctl_create_interface(conf->dev_type, dev_name);
+	*conf->ifr_name = '\0';
+	ioctl_add_ifaddr(dev_name, conf->ifa_src,
+		conf->ifa_mask, conf->ifa_dst);
+#endif
 	vtun_sig_add_interface_by_device(conf->dev);
 
 	for (r = conf->routes; r; r = next) {

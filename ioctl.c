@@ -2,7 +2,13 @@
 #include "ioctl.h"
 
 #include <arpa/inet.h>
+#if defined(__linux__)
+#include <fcntl.h>
+#include <linux/if.h>
+#include <linux/if_tun.h>
+#elif defined(__FreeBSD__)
 #include <net/if.h>
+#endif
 #include <net/route.h>
 #include <string.h>
 #include <sys/ioctl.h>
@@ -30,6 +36,7 @@ void ioctl_add_ifaddr(name, src, netmask, dst)
 	const char *dst;
 {
 	int sock;
+#if defined(__FreeBSD__)
 	struct ifaliasreq ifr;
 	struct sockaddr_in *const addr = (struct sockaddr_in *)&ifr.ifra_addr;
 	struct sockaddr_in *const mask = (struct sockaddr_in *)&ifr.ifra_mask;
@@ -49,6 +56,46 @@ void ioctl_add_ifaddr(name, src, netmask, dst)
 		perror("ioctl SIOCAIFADDR");
 		exit(1);
 	}
+#elif defined(__linux__)
+	struct ifreq ifr;
+
+	if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+		perror("socket");
+		exit(1);
+	}
+
+	memset(&ifr, 0, sizeof(ifr));
+	strcpy(ifr.ifr_name, name);
+	INET(&ifr.ifr_addr, inet_addr(src));
+	if (ioctl(sock, SIOCSIFADDR, &ifr) < 0) {
+		perror("ioctl SIOCSIFADDR");
+		exit(1);
+	}
+
+	memset(&ifr, 0, sizeof(ifr));
+	strcpy(ifr.ifr_name, name);
+	INET(&ifr.ifr_netmask, MASK2ADDR(netmask));
+	if (ioctl(sock, SIOCSIFNETMASK, &ifr) < 0) {
+		perror("ioctl SIOCSIFNETMASK");
+		exit(1);
+	}
+
+	memset(&ifr, 0, sizeof(ifr));
+	strcpy(ifr.ifr_name, name);
+	INET(&ifr.ifr_dstaddr, inet_addr(dst));
+	if (ioctl(sock, SIOCSIFDSTADDR, &ifr) < 0) {
+		perror("ioctl SIOCSIFDSTADDR");
+		exit(1);
+	}
+
+	memset(&ifr, 0, sizeof(ifr));
+	strcpy(ifr.ifr_name, name);
+	ifr.ifr_flags = IFF_PROMISC | IFF_UP;
+	if (ioctl(sock, SIOCSIFFLAGS, &ifr) < 0) {
+		perror("ioctl SIOCSIFFLAGS");
+		exit(1);
+	}
+#endif
 
 	close(sock);
 }
@@ -115,6 +162,7 @@ void ioctl_add_route(dst, gw)
 	close(sock);
 }
 
+#if defined(__FreeBSD__)
 void ioctl_create_interface(dev_type, name)
 	const char *dev_type;
 	char *name;
@@ -136,8 +184,46 @@ void ioctl_create_interface(dev_type, name)
 	strcpy(name, ifr.ifr_name);
 
 	close(sock);
+#elif defined(__linux__)
+int ioctl_create_interface(dev_type, name)
+	const char *dev_type;
+	char *name;
+{
+	short flags;
+	char path[16];
+	int fd, i;
+	struct ifreq ifr;
+
+	if (strcmp(dev_type, "tap") == 0)
+		flags = IFF_POINTOPOINT | IFF_TAP;
+	else if (strcmp(dev_type, "tun") == 0)
+		flags = IFF_POINTOPOINT | IFF_TUN;
+	else {
+		fprintf(stderr, "invalid device type, %s\n", dev_type);
+		exit(1);
+	}
+
+	snprintf(path, sizeof(path), "/dev/net/%s", dev_type);
+	if ((fd = open(path, O_RDWR)) < 0) {
+		perror("unable to create tun/tap device, open");
+		exit(1);
+	}
+
+	for (i = 0;; i++) {
+		memset(&ifr, 0, sizeof(ifr));
+		ifr.ifr_flags = flags;
+		snprintf(ifr.ifr_name, IFNAMSIZ, "%s%d", dev_type, i);
+		if (ioctl(fd, TUNSETIFF, &ifr) == 0) {
+			strcpy(name, ifr.ifr_name);
+			break;
+		}
+	}
+
+	return fd;
+#endif
 }
 
+#if defined(__FreeBSD__)
 void ioctl_destroy_interface(name)
 	const char *name;
 {
@@ -158,3 +244,4 @@ void ioctl_destroy_interface(name)
 
 	close(sock);
 }
+#endif
