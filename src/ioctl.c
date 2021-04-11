@@ -21,10 +21,17 @@
 	((struct sockaddr_in *)(p))->sin_family = AF_INET; \
 	((struct sockaddr_in *)(p))->sin_addr.s_addr = (a);
 #elif defined(__linux__)
+#ifdef __VSCODE__
+#define INET(p, a) \
+	memset(p, 0, sizeof(struct sockaddr_in)); \
+	*(sa_family_t *)(p) = AF_INET; \
+	((struct sockaddr_in *)(p))->sin_addr.s_addr = (a);
+#else
 #define INET(p, a) \
 	memset(p, 0, sizeof(struct sockaddr_in)); \
 	((struct sockaddr_in *)(p))->sin_family = AF_INET; \
 	((struct sockaddr_in *)(p))->sin_addr.s_addr = (a);
+#endif
 #endif
 
 #define MASK2ADDR(n) htonl(0xffffffff ^ (n < 32 ? ((1 << (32 - n)) - 1) : 0))
