@@ -11,7 +11,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#if defined(__FreeBSD__)
 #include <sys/event.h>
+#elif defined(__linux__)
+#include <sys/epoll.h>
+#endif
+
 #include <sys/param.h>
 #include <unistd.h>
 
@@ -43,6 +49,7 @@ static void vtun_info_init(info, conf, w)
 static int vtun_main(info)
 	vtun_info_t *info;
 {
+#if defined(__FreeBSD__)
 	int kq, n = 0;
 	struct kevent kev[2];
 	void (*func)(vtun_info_t *info);
@@ -66,6 +73,41 @@ static int vtun_main(info)
 		(*func)(info);
 		n = 0;
 	}
+#elif defined(__linux__)
+	int epl, n = 0, timeout, r;
+	struct epoll_event eev[2];
+	void (*func)(vtun_info_t *info);
+
+	if ((epl = epoll_create1(0)) < 0) {
+		perror("epoll_create1");
+		exit(1);
+	}
+
+	eev[n].data.fd = info->dev;
+	eev[n].events = EPOLLIN;
+	if (epoll_ctl(epl, EPOLL_CTL_ADD, info->dev, &eev[n++]) < 0) {
+		perror("epoll_ctl(EPOLL_CTL_ADD)");
+		exit(1);
+	}
+	eev[n].data.fd = info->sock;
+	eev[n].events = EPOLLIN;
+	if (epoll_ctl(epl, EPOLL_CTL_ADD, info->sock, &eev[n++]) < 0) {
+		perror("epoll_ctl(EPOLL_CTL_ADD)");
+		exit(1);
+	}
+	timeout = info->keepalive ? (info->keepalive->tv_sec * 1000 + info->keepalive->tv_nsec / 1000000) : -1;
+	for (;;) {
+		if ((r = epoll_wait(epl, eev, n, timeout)) < 0) {
+			perror("epoll_wait");
+			exit(1);
+		}
+		if (r == 0)
+			func = vtun_xfer_keepalive;
+		else
+			func = eev->data.fd == info->dev ? vtun_xfer_l2p : vtun_xfer_p2l;
+		(*func)(info);
+	}
+#endif
 
 	return (0);
 }
