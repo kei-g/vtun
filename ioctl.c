@@ -8,11 +8,18 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 
+#if defined(__FreeBSD__)
 #define INET(p, a) \
 	memset(p, 0, sizeof(struct sockaddr_in)); \
 	((struct sockaddr_in *)(p))->sin_len = sizeof(struct sockaddr_in); \
 	((struct sockaddr_in *)(p))->sin_family = AF_INET; \
 	((struct sockaddr_in *)(p))->sin_addr.s_addr = (a);
+#elif defined(__linux__)
+#define INET(p, a) \
+	memset(p, 0, sizeof(struct sockaddr_in)); \
+	((struct sockaddr_in *)(p))->sin_family = AF_INET; \
+	((struct sockaddr_in *)(p))->sin_addr.s_addr = (a);
+#endif
 
 #define MASK2ADDR(n) htonl(0xffffffff ^ (n < 32 ? ((1 << (32 - n)) - 1) : 0))
 
@@ -50,13 +57,19 @@ void ioctl_add_route(dst, gw)
 	const char *dst;
 	const char *gw;
 {
+	char tmp[32], *dstnet, *maskstr, *ep;
+	uint8_t mask;
 	int sock;
+
+	strcpy(tmp, dst);
+	dstnet = strtok_r(tmp, "/", &maskstr);
+	mask = (uint8_t)strtoul(maskstr, &ep, 10);
+
+#if defined(__FreeBSD__)
 	struct {
 		struct rt_msghdr hdr;
 		struct sockaddr_in rtm_addrs[3];
 	} msg;
-	char tmp[32], *dstnet, *maskstr, *ep;
-	uint8_t mask;
 
 	if ((sock = socket(PF_ROUTE, SOCK_RAW, 0)) < 0) {
 		perror("unable to add route, socket(PF_ROUTE)");
@@ -72,9 +85,6 @@ void ioctl_add_route(dst, gw)
 	msg.hdr.rtm_addrs = RTA_DST | RTA_GATEWAY | RTA_NETMASK;
 	msg.hdr.rtm_seq = 1;
 
-	strcpy(tmp, dst);
-	dstnet = strtok_r(tmp, "/", &maskstr);
-	mask = (uint8_t)strtoul(maskstr, &ep, 10);
 	INET(&msg.rtm_addrs[RTAX_DST], inet_addr(dstnet));
 	INET(&msg.rtm_addrs[RTAX_GATEWAY], inet_addr(gw));
 	INET(&msg.rtm_addrs[RTAX_NETMASK], MASK2ADDR(mask));
@@ -83,6 +93,24 @@ void ioctl_add_route(dst, gw)
 		perror("failed to add route, write(PF_ROUTE)");
 		exit(1);
 	}
+#elif defined(__linux__)
+	struct rtentry rte;
+
+	if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+		perror("unable to add route, socket(AF_INET, SOCK_DGRAM, 0)");
+		exit(1);
+	}
+
+	INET(&rte.rt_dst, inet_addr(dstnet));
+	INET(&rte.rt_gateway, inet_addr(gw));
+	INET(&rte.rt_genmask, MASK2ADDR(mask));
+	rte.rt_flags = RTF_GATEWAY | RTF_STATIC | RTF_UP;
+	rte.rt_metric = htons(1);
+	if (ioctl(sock, SIOCADDRT, &rte) < 0) {
+		perror("failed to add route, ioctl(SIOCADDRT)");
+		exit(1);
+	}
+#endif
 
 	close(sock);
 }
