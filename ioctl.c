@@ -16,8 +16,8 @@
 
 #define MASK2ADDR(n) htonl(0xffffffff ^ (n < 32 ? ((1 << (32 - n)) - 1) : 0))
 
-void ioctl_add_ifaddr(ifr_name, src, netmask, dst)
-	const char *ifr_name;
+void ioctl_add_ifaddr(name, src, netmask, dst)
+	const char *name;
 	const char *src;
 	uint32_t netmask;
 	const char *dst;
@@ -34,7 +34,7 @@ void ioctl_add_ifaddr(ifr_name, src, netmask, dst)
 	}
 
 	memset(&ifr, 0, sizeof(ifr));
-	strncpy(ifr.ifra_name, ifr_name, sizeof(ifr.ifra_name));
+	strncpy(ifr.ifra_name, name, sizeof(ifr.ifra_name));
 	INET(addr, inet_addr(src));
 	INET(mask, MASK2ADDR(netmask));
 	INET(dest, inet_addr(dst));
@@ -87,9 +87,9 @@ void ioctl_add_route(dst, gw)
 	close(sock);
 }
 
-void ioctl_create_interface(dev_type, ifr_name)
+void ioctl_create_interface(dev_type, name)
 	const char *dev_type;
-	char *ifr_name;
+	char *name;
 {
 	int sock;
 	struct ifreq ifr;
@@ -105,13 +105,13 @@ void ioctl_create_interface(dev_type, ifr_name)
 		perror("ioctl SIOCIFCREATE2");
 		exit(1);
 	}
-	strcpy(ifr_name, ifr.ifr_name);
+	strcpy(name, ifr.ifr_name);
 
 	close(sock);
 }
 
-void ioctl_destroy_interface(ifr_name)
-	const char *ifr_name;
+void ioctl_destroy_interface(name)
+	const char *name;
 {
 	int sock;
 	struct ifreq ifr;
@@ -122,7 +122,7 @@ void ioctl_destroy_interface(ifr_name)
 	}
 
 	memset(&ifr, 0, sizeof(ifr));
-	strncpy(ifr.ifr_name, ifr_name, sizeof(ifr.ifr_name));
+	strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
 	if (ioctl(sock, SIOCIFDESTROY, &ifr) < 0) {
 		perror("ioctl SIOCIFDESTROY");
 		return;
