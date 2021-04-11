@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 static void vtun_conf_read_address(conf, value)
@@ -156,7 +157,8 @@ void vtun_conf_init(conf, path)
 	const char *path;
 {
 	int fd;
-	char buf[4096], *lp, *t, *key, *value, dev_name[24];
+	struct stat st;
+	char *buf, *lp, *t, *key, *value, dev_name[24];
 	ssize_t len;
 	const vtun_conf_read_t *c;
 	vtun_route_t *r, *next;
@@ -167,9 +169,23 @@ void vtun_conf_init(conf, path)
 		exit(1);
 	}
 
-	memset(buf, 0, sizeof(buf));
-	if ((len = read(fd, buf, sizeof(buf) - 1)) < 0) {
+	if (fstat(fd, &st) < 0) {
+		perror("fstat");
+		(void)fprintf(stderr, "Unable to stat %s\n", path);
+		exit(1);
+	}
+
+	buf = malloc(st.st_size + 1);
+	if (!buf) {
+		perror("malloc");
+		(void)fprintf(stderr, "Unable to read configurations from %s\n", path);
+		exit(1);
+	}
+	buf[st.st_size] = '\0';
+
+	if ((len = read(fd, buf, st.st_size)) < 0) {
 		perror("read");
+		(void)fprintf(stderr, "Unable to read configurations from %s\n", path);
 		exit(1);
 	}
 
@@ -188,6 +204,8 @@ void vtun_conf_init(conf, path)
 				break;
 			}
 	}
+
+	free(buf);
 
 	if (!*conf->dev_type) {
 		fprintf(stderr, "No device is specified.\n");
