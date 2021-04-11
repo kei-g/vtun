@@ -10,6 +10,7 @@
 static void vtun_dump_iphdr(info)
 	vtun_info_t *info;
 {
+#if defined(__FreeBSD__)
 	const struct ip *const iphdr = (const struct ip *)info->tmp;
 	(void)printf("LEN=%u,ID=%u,F=%0x,OFF=%u,TTL=%u,PROTO=%u,%s => %s\n",
 		ntohs(iphdr->ip_len), ntohs(iphdr->ip_id),
@@ -17,6 +18,15 @@ static void vtun_dump_iphdr(info)
 		iphdr->ip_ttl, iphdr->ip_p,
 		inet_ntoa_r(iphdr->ip_src, info->name1, sizeof(info->name1)),
 		inet_ntoa_r(iphdr->ip_dst, info->name2, sizeof(info->name2)));
+#elif defined(__linux__)
+	const struct iphdr *const iphdr = (const struct iphdr *)info->tmp;
+	(void)printf("LEN=%u,ID=%u,F=%0x,OFF=%u,TTL=%u,PROTO=%u,%s => %s\n",
+		ntohs(iphdr->tot_len), ntohs(iphdr->id),
+		ntohs(iphdr->frag_off) >> 13, ntohs(iphdr->frag_off) & 0x1fff,
+		iphdr->ttl, iphdr->protocol,
+		inet_ntoa_r(iphdr->saddr, info->name1, sizeof(info->name1)),
+		inet_ntoa_r(iphdr->daddr, info->name2, sizeof(info->name2)));
+#endif
 }
 #endif
 

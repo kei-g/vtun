@@ -18,7 +18,11 @@ struct _vtun_info {
 			uint8_t cmd;
 			union {
 				uint8_t buf[65535];
+#if defined(__FreeBSD__)
 				struct ip iphdr[1];
+#elif defined(__linux__)
+				struct iphdr iphdr[1];
+#endif
 			};
 		} obj;
 	};
