@@ -1,34 +1,33 @@
-CC=clang
-CFLAGS=-D _WITH_DPRINTF -O3 -Wall -Werror -march=native
-LD=clang
-LDFLAGS=-Wl,-s
-LIBS=-lcrypto
-TARGETS=vtun
-OBJS=base64.o \
-	client.o \
-	codec.o \
-	conf.o \
-	ioctl.o \
-	server.o \
-	sig.o \
-	vtun.o \
-	xfer.o
+.DEFAULT_GOAL := all
+BUILD_DIR = build
+RM = rm -fr
+TARGET_BINARY = $(BUILD_DIR)/bin/vtun
 
-all: $(TARGETS)
+.NOTMAIN: clean disasm install nm readelf
 
-$(TARGETS): $(OBJS)
-	$(LD) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
+.PHONY: all clean disasm install nm readelf
 
-.c.o:
-	$(CC) $(CFLAGS) -c $<
+all: $(TARGET_BINARY)
 
 clean:
-	rm -f $(TARGETS) $(OBJS)
+	$(RM) $(BUILD_DIR)
 
-install: $(TARGETS)
+disasm: $(TARGET_BINARY)
+	@llvm-objdump --disassemble-all $(TARGET_BINARY) | less
+
+install: $(TARGET_BINARY)
 	cat rc > /usr/local/etc/rc.d/vtun
 	chmod 555 /usr/local/etc/rc.d/vtun
-	cp $(TARGETS) /usr/local/sbin/
-	rm -f /usr/local/sbin/$(TARGETS)-keygen
-	ln /usr/local/sbin/$(TARGETS) /usr/local/sbin/$(TARGETS)-keygen
-	make clean
+	cp $(TARGET_BINARY) /usr/local/sbin/
+	ln -f /usr/local/sbin/vtun /usr/local/sbin/vtun-keygen
+	@make clean
+
+nm: $(TARGET_BINARY)
+	@nm -gP $(TARGET_BINARY)
+
+readelf: $(TARGET_BINARY)
+	@readelf --all $(TARGET_BINARY) | less
+
+$(TARGET_BINARY):
+	@[ -d $(BUILD_DIR) ] || mkdir -p $(BUILD_DIR)
+	@cd $(BUILD_DIR) && env CC=clang CXX=clang LD=clang cmake .. && cmake --build . -j8
