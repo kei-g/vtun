@@ -1,5 +1,12 @@
 #include "codec.h"
 
+#include <fcntl.h>
+#include <openssl/evp.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
 static void generate_random(uint8_t *buf, size_t bufsize);
 
 void vtun_decode(info)

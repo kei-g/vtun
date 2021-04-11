@@ -1,12 +1,19 @@
 #include "vtun.h"
 
-#include <libgen.h>
-#include <sys/param.h>
-
 #include "base64.h"
 #include "codec.h"
 #include "conf.h"
 #include "xfer.h"
+
+#include <fcntl.h>
+#include <getopt.h>
+#include <libgen.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/event.h>
+#include <sys/param.h>
+#include <unistd.h>
 
 static void vtun_info_init(info, conf, w)
 	vtun_info_t *info;

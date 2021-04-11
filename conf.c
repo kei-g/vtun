@@ -7,6 +7,14 @@
 #include "ioctl.h"
 #include "sig.h"
 
+#include <arpa/inet.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <unistd.h>
+
 static void vtun_conf_read_address(conf, value)
 	vtun_conf_t *conf;
 	char *value;

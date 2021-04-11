@@ -1,18 +1,13 @@
 #ifndef __include_vtun_h__
 #define __include_vtun_h__
 
-#include <unistd.h>
-#include <fcntl.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
-#include <sys/event.h>
-#include <sys/socket.h>
+#include <sys/types.h>
+
 #include <netinet/in.h>
 #include <netinet/ip.h>
-#include <arpa/inet.h>
 #include <openssl/evp.h>
+#include <stdint.h>
+#include <time.h>
 
 typedef struct _vtun_info vtun_info_t;
 

@@ -1,6 +1,11 @@
 #include "codec.h"
 #include "xfer.h"
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/socket.h>
+#include <unistd.h>
+
 #ifdef DEBUG
 static void vtun_dump_iphdr(info)
 	vtun_info_t *info;

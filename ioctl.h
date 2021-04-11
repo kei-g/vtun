@@ -1,7 +1,7 @@
 #ifndef __include_ioctl_h__
 #define __include_ioctl_h__
 
-#include <sys/types.h>
+#include <stdint.h>
 
 void ioctl_add_ifaddr(const char *ifr_name,
 	const char *src, uint32_t mask, const char *dst);

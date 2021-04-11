@@ -1,9 +1,12 @@
 #include "vtun.h"
 #include "ioctl.h"
 
+#include <arpa/inet.h>
 #include <net/if.h>
 #include <net/route.h>
+#include <string.h>
 #include <sys/ioctl.h>
+#include <unistd.h>
 
 #define INET(p, a) \
 	memset(p, 0, sizeof(struct sockaddr_in)); \
