@@ -1,4 +1,5 @@
 .DEFAULT_GOAL := all
+ASSETS_DIR = assets
 BUILD_DIR = build
 RM = rm -fr
 TARGET_BINARY = $(BUILD_DIR)/bin/vtun
@@ -16,8 +17,9 @@ disasm: $(TARGET_BINARY)
 	@llvm-objdump --disassemble-all $(TARGET_BINARY) | less
 
 install: $(TARGET_BINARY)
-	cat rc > /usr/local/etc/rc.d/vtun
+	cp $(ASSETS_DIR)/FreeBSD/usr/local/etc/rc.d/vtun /usr/local/etc/rc.d/
 	chmod 555 /usr/local/etc/rc.d/vtun
+	cp -r $(ASSETS_DIR)/FreeBSD/usr/local/etc/vtun /usr/local/etc/
 	cp $(TARGET_BINARY) /usr/local/sbin/
 	ln -f /usr/local/sbin/vtun /usr/local/sbin/vtun-keygen
 	@make clean
