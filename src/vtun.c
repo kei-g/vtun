@@ -20,10 +20,7 @@
 
 #include <unistd.h>
 
-static void vtun_info_init(info, conf, w)
-	vtun_info_t *info;
-	const vtun_conf_t *conf;
-	struct timespec *w;
+static void vtun_info_init(vtun_info_t *info, const vtun_conf_t *conf, struct timespec *w)
 {
 	info->addr = conf->addr;
 	info->dev = conf->dev;
@@ -46,19 +43,16 @@ static void vtun_info_init(info, conf, w)
 		NULL, conf->key, conf->iv);
 }
 
-static int vtun_main(info)
-	vtun_info_t *info;
+static int vtun_main(vtun_info_t *info)
 {
 #if defined(__FreeBSD__)
 	int kq, n = 0;
-	struct kevent kev[2];
-	void (*func)(vtun_info_t *info);
-
 	if ((kq = kqueue()) < 0) {
 		perror("kqueue");
 		exit(1);
 	}
 
+	struct kevent kev[2];
 	EV_SET(&kev[n++], info->dev, EVFILT_READ, EV_ADD, 0, 0, NULL);
 	EV_SET(&kev[n++], info->sock, EVFILT_READ, EV_ADD, 0, 0, NULL);
 	for (;;) {
@@ -66,6 +60,7 @@ static int vtun_main(info)
 			perror("kevent");
 			exit(1);
 		}
+		void (*func)(vtun_info_t *info);
 		if (n == 0)
 			func = vtun_xfer_keepalive;
 		else
@@ -74,15 +69,13 @@ static int vtun_main(info)
 		n = 0;
 	}
 #elif defined(__linux__)
-	int epl, n = 0, timeout, r;
-	struct epoll_event eev[2];
-	void (*func)(vtun_info_t *info);
-
+	int epl, n = 0;
 	if ((epl = epoll_create1(0)) < 0) {
 		perror("epoll_create1");
 		exit(1);
 	}
 
+	struct epoll_event eev[2];
 	eev[n].data.fd = info->dev;
 	eev[n].events = EPOLLIN;
 	if (epoll_ctl(epl, EPOLL_CTL_ADD, info->dev, &eev[n++]) < 0) {
@@ -95,12 +88,14 @@ static int vtun_main(info)
 		perror("epoll_ctl(EPOLL_CTL_ADD)");
 		exit(1);
 	}
-	timeout = info->keepalive ? (info->keepalive->tv_sec * 1000 + info->keepalive->tv_nsec / 1000000) : -1;
+	int timeout = info->keepalive ? (info->keepalive->tv_sec * 1000 + info->keepalive->tv_nsec / 1000000) : -1;
 	for (;;) {
+		int r;
 		if ((r = epoll_wait(epl, eev, n, timeout)) < 0) {
 			perror("epoll_wait");
 			exit(1);
 		}
+		void (*func)(vtun_info_t *info);
 		if (r == 0)
 			func = vtun_xfer_keepalive;
 		else
@@ -109,20 +104,17 @@ static int vtun_main(info)
 	}
 #endif
 
-	return (0);
+	return 0;
 }
 
 static int vtun_bn_generate_key(void)
 {
 	unsigned char iv[12], key[32];
-	base64_t b;
-	char *msg;
-
 	vtun_generate_iv(iv);
 	vtun_generate_key(key);
 
-	b = base64_alloc();
-	msg = base64_encode(b, iv, sizeof(iv));
+	base64_t b = base64_alloc();
+	char *msg = base64_encode(b, iv, sizeof(iv));
 	printf("iv: %s\n", msg);
 	free(msg);
 	msg = base64_encode(b, key, sizeof(key));
@@ -130,14 +122,15 @@ static int vtun_bn_generate_key(void)
 	free(msg);
 	base64_free(&b);
 
-	return (0);
+	return 0;
 }
 
-int main(argc, argv)
-	int argc;
-	char *argv[];
+int main(int argc, char *argv[])
 {
-	char *bn, *confpath = NULL, *pidpath = NULL;
+	char *bn = basename(*argv);
+	if (strcmp(bn, "vtun-keygen") == 0)
+		return vtun_bn_generate_key();
+
 	int opt, idx, verbose = 0;
 	struct option opts[] = {
 		{ "background", no_argument, NULL, 'b' },
@@ -147,14 +140,7 @@ int main(argc, argv)
 		{ "version", no_argument, NULL, 'V' },
 	};
 	pid_t pid;
-	vtun_conf_t conf;
-	vtun_info_t *info;
-	struct timespec w;
-
-	bn = basename(*argv);
-	if (strcmp(bn, "vtun-keygen") == 0)
-		return vtun_bn_generate_key();
-
+	char *confpath = NULL, *pidpath = NULL;
 	while ((opt = getopt_long(argc, argv, "Vbc:p:v", opts, &idx)) != -1)
 		switch (opt) {
 		case 'V':
@@ -182,6 +168,7 @@ int main(argc, argv)
 
 	if (!confpath)
 		confpath = strdup("/usr/local/etc/vtun/vtun.conf");
+	vtun_conf_t conf;
 	vtun_conf_init(&conf, confpath);
 	free(confpath);
 
@@ -198,7 +185,7 @@ int main(argc, argv)
 		free(pidpath);
 	}
 
-	info = (vtun_info_t *)malloc(sizeof(*info));
+	vtun_info_t *info = malloc(sizeof(*info));
 	if (!info) {
 		perror("malloc");
 		exit(1);
@@ -206,8 +193,7 @@ int main(argc, argv)
 
 	info->verbose = verbose;
 
-	w.tv_sec = 30;
-	w.tv_nsec = 0;
+	struct timespec w = {.tv_sec = 30, .tv_nsec = 0};
 	vtun_info_init(info, &conf, &w);
 
 	return vtun_main(info);

@@ -21,8 +21,7 @@ static char *inet_ntoa_r(uint32_t addr, char *dest, size_t destlen)
 }
 #endif
 
-static void vtun_dump_iphdr(info)
-	vtun_info_t *info;
+static void vtun_dump_iphdr(vtun_info_t *info)
 {
 #if defined(__FreeBSD__)
 	const struct ip *const iphdr = &info->tun.iphdr;
@@ -46,18 +45,14 @@ static void vtun_dump_iphdr(info)
 #endif
 }
 
-void vtun_xfer_keepalive(info)
-	vtun_info_t *info;
+void vtun_xfer_keepalive(vtun_info_t *info)
 {
 	uint32_t v = 0;
 	vtun_xfer_raw(info, &v, sizeof(v));
 }
 
-void vtun_xfer_l2p(info)
-	vtun_info_t *info;
+void vtun_xfer_l2p(vtun_info_t *info)
 {
-	ssize_t sent;
-
 	info->buflen = read(info->dev, info->tmp, sizeof(info->tmp));
 	if (info->buflen < 0) {
 		perror("read");
@@ -87,7 +82,7 @@ void vtun_xfer_l2p(info)
 
 	info->obj.cmd = 1;
 	info->buflen += sizeof(info->obj.cmd);
-	sent = sendto(info->sock, info->all, info->buflen, 0,
+	ssize_t sent = sendto(info->sock, info->all, info->buflen, 0,
 		(struct sockaddr *)&info->addr, sizeof(info->addr));
 	if (sent < 0) {
 		perror("sendto");
@@ -98,14 +93,10 @@ void vtun_xfer_l2p(info)
 			inet_ntoa(info->addr.sin_addr), ntohs(info->addr.sin_port));
 }
 
-void vtun_xfer_p2l(info)
-	vtun_info_t *info;
+void vtun_xfer_p2l(vtun_info_t *info)
 {
-	socklen_t addrlen;
 	struct sockaddr_in addr;
-	ssize_t sent;
-
-	addrlen = sizeof(addr);
+	socklen_t addrlen = sizeof(addr);
 	info->buflen = recvfrom(info->sock, info->all, sizeof(info->all), 0,
 		(struct sockaddr *)&addr, &addrlen);
 	if (info->buflen < 0) {
@@ -124,7 +115,7 @@ void vtun_xfer_p2l(info)
 	if (info->verbose)
 		vtun_dump_iphdr(info);
 
-	sent = write(info->dev, info->tmp, info->buflen);
+	ssize_t sent = write(info->dev, info->tmp, info->buflen);
 	if (sent < 0) {
 		perror("write");
 		exit(1);
@@ -133,14 +124,9 @@ void vtun_xfer_p2l(info)
 		(void)printf("%zd bytes written to %s\n", sent, info->devname);
 }
 
-void vtun_xfer_raw(info, msg, len)
-	vtun_info_t *info;
-	const void *msg;
-	size_t len;
+void vtun_xfer_raw(vtun_info_t *info, const void *msg, size_t len)
 {
-	ssize_t sent;
-
-	sent = sendto(info->sock, msg, len, 0,
+	ssize_t sent = sendto(info->sock, msg, len, 0,
 		(struct sockaddr *)&info->addr, sizeof(info->addr));
 	if (sent < 0) {
 		perror("sendto");

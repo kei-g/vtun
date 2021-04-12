@@ -1,8 +1,6 @@
 #include "client.h"
 
-int vtun_client_xfer_p2l(info, addr)
-	vtun_info_t *info;
-	const struct sockaddr_in *addr;
+int vtun_client_xfer_p2l(vtun_info_t *info, const struct sockaddr_in *addr)
 {
 	return info->obj.cmd == 1 &&
 		addr->sin_addr.s_addr == info->addr.sin_addr.s_addr &&

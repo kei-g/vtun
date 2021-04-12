@@ -27,30 +27,25 @@ struct _vtun_sig_interface {
 
 static vtun_sig_interface_t *interfaces = NULL;
 
-static void vtun_sighup(sig)
-	int sig;
+static void vtun_sighup(int sig)
 {
 	printf("HUP\n");
 }
 
-static void vtun_sigint(sig)
-	int sig;
+static void vtun_sigint(int sig)
 {
 	printf("\n");
 	exit(1);
 }
 
-static void vtun_sigterm(sig)
-	int sig;
+static void vtun_sigterm(int sig)
 {
 	exit(1);
 }
 
 static void vtun_sig_destroy_interfaces(void)
 {
-	vtun_sig_interface_t *ifr, *next;
-
-	for (ifr = interfaces; ifr; ifr = next) {
+	for (vtun_sig_interface_t *next, *ifr = interfaces; ifr; ifr = next) {
 		next = ifr->next;
 		switch (ifr->ifr_type) {
 		case VTUN_SIG_DEVICE:
@@ -74,12 +69,9 @@ void vtun_sig_init(void)
 	signal(SIGTERM, vtun_sigterm);
 }
 
-void vtun_sig_add_interface_by_device(dev)
-	int dev;
+void vtun_sig_add_interface_by_device(int dev)
 {
-	vtun_sig_interface_t *ifr;
-
-	ifr = (vtun_sig_interface_t *)malloc(sizeof(*ifr));
+	vtun_sig_interface_t *ifr = malloc(sizeof(*ifr));
 	if (!ifr) {
 		perror("malloc");
 		exit(1);
@@ -94,12 +86,9 @@ void vtun_sig_add_interface_by_device(dev)
 	atexit(vtun_sig_destroy_interfaces);
 }
 
-void vtun_sig_add_interface_by_name(ifr_name)
-	const char *ifr_name;
+void vtun_sig_add_interface_by_name(const char *name)
 {
-	vtun_sig_interface_t *ifr;
-
-	ifr = (vtun_sig_interface_t *)malloc(sizeof(*ifr));
+	vtun_sig_interface_t *ifr = malloc(sizeof(*ifr));
 	if (!ifr) {
 		perror("malloc");
 		exit(1);
@@ -107,7 +96,7 @@ void vtun_sig_add_interface_by_name(ifr_name)
 
 	ifr->next = interfaces;
 	ifr->ifr_type = VTUN_SIG_NAME;
-	strncpy(ifr->ifr_name, ifr_name, sizeof(ifr->ifr_name));
+	strncpy(ifr->ifr_name, name, sizeof(ifr->ifr_name));
 
 	interfaces = ifr;
 

@@ -1,8 +1,6 @@
 #include "server.h"
 
-int vtun_server_xfer_p2l(info, addr)
-	vtun_info_t *info;
-	const struct sockaddr_in *addr;
+int vtun_server_xfer_p2l(vtun_info_t *info, const struct sockaddr_in *addr)
 {
 	if (info->obj.cmd != 1)
 		return 0;

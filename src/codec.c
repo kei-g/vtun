@@ -4,55 +4,44 @@
 #include <openssl/evp.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
 
 static void generate_random(uint8_t *buf, size_t bufsize);
 
-void vtun_decode(info)
-	vtun_info_t *info;
+void vtun_decode(vtun_info_t *info)
 {
-	int len;
-	len = 0;
+	int len = 0;
 	EVP_DecryptUpdate(info->dec, info->tmp, &len,
 		info->obj.buf, info->buflen);
 	info->buflen = len;
 }
 
-void vtun_encode(info)
-	vtun_info_t *info;
+void vtun_encode(vtun_info_t *info)
 {
-	int len;
-	len = 0;
+	int len = 0;
 	EVP_EncryptUpdate(info->enc, info->obj.buf, &len,
 		(void *)&info->tun.iphdr, info->buflen);
 	info->buflen = len;
 }
 
-void vtun_generate_iv(iv)
-	uint8_t iv[12];
+void vtun_generate_iv(uint8_t iv[12])
 {
 	generate_random(iv, 12);
 }
 
-void vtun_generate_key(key)
-	uint8_t key[32];
+void vtun_generate_key(uint8_t key[32])
 {
 	generate_random(key, 32);
 }
 
-static void generate_random(buf, bufsize)
-	uint8_t *buf;
-	size_t bufsize;
+static void generate_random(uint8_t *buf, size_t bufsize)
 {
-	int fd;
-	ssize_t len;
-	fd = open("/dev/urandom", O_RDONLY);
+	int fd = open("/dev/urandom", O_RDONLY);
 	if (fd < 0) {
 		perror("open(\"/dev/urandom\")");
 		exit(EXIT_FAILURE);
 	}
-	len = read(fd, buf, bufsize);
+	ssize_t len = read(fd, buf, bufsize);
 	if (len < 0) {
 		perror("read(\"/dev/urandom\")");
 		exit(EXIT_FAILURE);
