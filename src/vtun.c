@@ -18,7 +18,6 @@
 #include <sys/epoll.h>
 #endif
 
-#include <sys/param.h>
 #include <unistd.h>
 
 static void vtun_info_init(info, conf, w)
