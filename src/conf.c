@@ -62,7 +62,14 @@ static void vtun_conf_read_connect(vtun_conf_t *conf, char *value)
 
 static void vtun_conf_read_device(vtun_conf_t *conf, char *value)
 {
-	strncpy(conf->dev_type, value, sizeof(conf->dev_type));
+	if (strcmp(value, "tap") == 0)
+		conf->dev_type = VTUN_DEV_TAP;
+	else if (strcmp(value, "tun") == 0)
+		conf->dev_type = VTUN_DEV_TUN;
+	else {
+		(void)fprintf(stderr, "Invalid device type, %s\n", value);
+		exit(1);
+	}
 }
 
 static void vtun_conf_read_ifaddr(vtun_conf_t *conf, char *value)
@@ -173,7 +180,7 @@ void vtun_conf_init(vtun_conf_t *conf, const char *path)
 
 	free(buf);
 
-	if (!*conf->dev_type) {
+	if (conf->dev_type == VTUN_DEV_UNSPECIFIED) {
 		fprintf(stderr, "No device is specified.\n");
 		exit(1);
 	}

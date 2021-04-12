@@ -158,7 +158,7 @@ void ioctl_add_route(const char *dst, const char *gw)
 }
 
 #if defined(__FreeBSD__)
-void ioctl_create_interface(const char *dev_type, char *name)
+void ioctl_create_interface(const vtun_dev_t dev_type, char *name)
 {
 	int sock;
 	if ((sock = socket(AF_INET, SOCK_RAW, IPPROTO_RAW)) < 0) {
@@ -168,7 +168,16 @@ void ioctl_create_interface(const char *dev_type, char *name)
 
 	struct ifreq ifr;
 	memset(&ifr, 0, sizeof(ifr));
-	strncpy(ifr.ifr_name, dev_type, sizeof(ifr.ifr_name));
+	switch (dev_type) {
+		case VTUN_DEV_TAP:
+			strncpy(ifr.ifr_name, "tap", sizeof(ifr.ifr_name));
+			break;
+		case VTUN_DEV_TUN:
+			strncpy(ifr.ifr_name, "tun", sizeof(ifr.ifr_name));
+			break;
+		default:
+			__builtin_assume(0);
+	}
 	if (ioctl(sock, SIOCIFCREATE2, &ifr) < 0) {
 		perror("ioctl SIOCIFCREATE2");
 		exit(1);
@@ -177,23 +186,13 @@ void ioctl_create_interface(const char *dev_type, char *name)
 
 	close(sock);
 #elif defined(__linux__)
-int ioctl_create_interface(const char *dev_type, char *name)
+int ioctl_create_interface(const vtun_dev_t dev_type, char *name)
 {
-	short flags;
-	if (strcmp(dev_type, "tap") == 0)
-		flags = IFF_POINTOPOINT | IFF_TAP;
-	else if (strcmp(dev_type, "tun") == 0)
-		flags = IFF_POINTOPOINT | IFF_TUN;
-	else {
-		fprintf(stderr, "invalid device type, %s\n", dev_type);
-		exit(1);
-	}
+	const int index = dev_type == VTUN_DEV_TAP ? 0 : 1;
 
-	char path[16];
-	snprintf(path, sizeof(path), "/dev/net/%s", dev_type);
-
+	const char *paths[] = { "/dev/net/tap", "/dev/net/tun" };
 	int fd;
-	if ((fd = open(path, O_RDWR)) < 0) {
+	if ((fd = open(paths[index], O_RDWR)) < 0) {
 		perror("unable to create tun/tap device, open");
 		exit(1);
 	}
@@ -201,8 +200,10 @@ int ioctl_create_interface(const char *dev_type, char *name)
 	for (int i = 0; i < INT_MAX; i++) {
 		struct ifreq ifr;
 		memset(&ifr, 0, sizeof(ifr));
-		ifr.ifr_flags = flags;
-		snprintf(ifr.ifr_name, IFNAMSIZ, "%s%d", dev_type, i);
+		const short flags[] = { IFF_TAP, IFF_TUN };
+		ifr.ifr_flags = IFF_POINTOPOINT | flags[index];
+		const char *formats[] = { "tap%d", "tun%d" };
+		snprintf(ifr.ifr_name, IFNAMSIZ, formats[index], i);
 		if (ioctl(fd, TUNSETIFF, &ifr) == 0) {
 			strcpy(name, ifr.ifr_name);
 			break;

@@ -4,6 +4,12 @@
 #include "vtun.h"
 
 typedef enum {
+	VTUN_DEV_TAP = 1,
+	VTUN_DEV_TUN = 2,
+	VTUN_DEV_UNSPECIFIED = 0,
+} vtun_dev_t;
+
+typedef enum {
 	VTUN_MODE_CLIENT,
 	VTUN_MODE_SERVER,
 	VTUN_MODE_UNSPECIFIED,
@@ -15,7 +21,8 @@ typedef struct _vtun_route vtun_route_t;
 struct _vtun_conf {
 	struct sockaddr_in addr;
 	int dev, sock;
-	char dev_type[16], ifa_src[16], ifa_dst[16], ifr_name[16];
+	vtun_dev_t dev_type;
+	char ifa_src[16], ifa_dst[16], ifr_name[16];
 	uint32_t ifa_mask;
 	uint8_t iv[12], key[32];
 	vtun_mode_t mode;
