@@ -33,7 +33,20 @@ struct _vtun_info {
 	int dev, ignore, sock;
 	struct timespec *keepalive;
 	char name1[32], name2[32];
-	uint8_t tmp[65536];
+	union {
+		uint8_t tmp[65536];
+#if defined(__FreeBSD__)
+		struct {
+			struct ip iphdr;
+		} tun;
+#elif defined(__linux__)
+		struct __attribute__((__packed__)) {
+			uint16_t unknown;
+			uint16_t ethtype;
+			struct iphdr iphdr;
+		} tun;
+#endif
+	};
 	int verbose;
 	int (*xfer_p2l)(vtun_info_t *info, const struct sockaddr_in *addr);
 };

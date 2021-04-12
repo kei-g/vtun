@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #if defined(__linux__)
+#include <net/ethernet.h>
+#include <netinet/ether.h>
 #include <string.h>
 #endif
 #include <sys/socket.h>
@@ -23,7 +25,7 @@ static void vtun_dump_iphdr(info)
 	vtun_info_t *info;
 {
 #if defined(__FreeBSD__)
-	const struct ip *const iphdr = (const struct ip *)info->tmp;
+	const struct ip *const iphdr = &info->tun.iphdr;
 	(void)printf("LEN=%u,ID=%u,F=%0x,OFF=%u,TTL=%u,PROTO=%u,%s => %s\n",
 		ntohs(iphdr->ip_len), ntohs(iphdr->ip_id),
 		ntohs(iphdr->ip_off) >> 13, ntohs(iphdr->ip_off) & 0x1fff,
@@ -31,7 +33,10 @@ static void vtun_dump_iphdr(info)
 		inet_ntoa_r(iphdr->ip_src, info->name1, sizeof(info->name1)),
 		inet_ntoa_r(iphdr->ip_dst, info->name2, sizeof(info->name2)));
 #elif defined(__linux__)
-	const struct iphdr *const iphdr = (const struct iphdr *)info->tmp;
+	const uint16_t ethtype = ntohs(info->tun.ethtype);
+	if (ethtype != ETHERTYPE_IP)
+		return;
+	const struct iphdr *const iphdr = &info->tun.iphdr;
 	(void)printf("LEN=%u,ID=%u,F=%0x,OFF=%u,TTL=%u,PROTO=%u,%s => %s\n",
 		ntohs(iphdr->tot_len), ntohs(iphdr->id),
 		ntohs(iphdr->frag_off) >> 13, ntohs(iphdr->frag_off) & 0x1fff,
@@ -58,6 +63,13 @@ void vtun_xfer_l2p(info)
 		perror("read");
 		exit(1);
 	}
+
+#if defined(__linux__)
+	if (info->buflen < 4)
+		return;
+	info->buflen -= 4;
+#endif
+
 	if (info->verbose)
 		(void)printf("%zd bytes are read.\n", info->buflen);
 

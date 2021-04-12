@@ -25,7 +25,7 @@ void vtun_encode(info)
 	int len;
 	len = 0;
 	EVP_EncryptUpdate(info->enc, info->obj.buf, &len,
-		info->tmp, info->buflen);
+		(void *)&info->tun.iphdr, info->buflen);
 	info->buflen = len;
 }
 
