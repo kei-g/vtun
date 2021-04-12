@@ -1,0 +1,9 @@
+[devfsrules_vtun=5]
+add include $devfsrules_hide_all
+add include $devfsrules_unhide_basic
+add include $devfsrules_unhide_login
+add path bpf* unhide
+add path fuse unhide
+add path tap unhide
+add path tun unhide
+add path zfs unhide
