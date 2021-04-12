@@ -27,6 +27,7 @@ static void vtun_info_init(info, conf, w)
 {
 	info->addr = conf->addr;
 	info->dev = conf->dev;
+	strncpy(info->devname, conf->ifr_name, sizeof(info->devname));
 	info->ignore = conf->mode == VTUN_MODE_SERVER;
 	info->sock = conf->sock;
 	info->keepalive = conf->mode == VTUN_MODE_CLIENT ? w : NULL;

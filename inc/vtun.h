@@ -31,6 +31,7 @@ struct _vtun_info {
 	struct sockaddr_in addr;
 	EVP_CIPHER_CTX *dec, *enc;
 	int dev, ignore, sock;
+	char devname[16];
 	struct timespec *keepalive;
 	char name1[32], name2[32];
 	union {

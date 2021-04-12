@@ -235,7 +235,7 @@ void vtun_conf_init(conf, path)
 	}
 #elif defined(__linux__)
 	conf->dev = ioctl_create_interface(conf->dev_type, dev_name);
-	*conf->ifr_name = '\0';
+	strncpy(conf->ifr_name, dev_name, sizeof(conf->ifr_name));
 	ioctl_add_ifaddr(dev_name, conf->ifa_src,
 		conf->ifa_mask, conf->ifa_dst);
 #endif

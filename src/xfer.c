@@ -71,7 +71,8 @@ void vtun_xfer_l2p(info)
 #endif
 
 	if (info->verbose)
-		(void)printf("%zd bytes are read.\n", info->buflen);
+		(void)printf("%zd bytes read from %s\n",
+			info->buflen, info->devname);
 
 	if (info->buflen < sizeof(info->obj.iphdr))
 		return;
@@ -129,7 +130,7 @@ void vtun_xfer_p2l(info)
 		exit(1);
 	}
 	if (info->verbose)
-		(void)printf("%zd bytes are written.\n", sent);
+		(void)printf("%zd bytes written to %s\n", sent, info->devname);
 }
 
 void vtun_xfer_raw(info, msg, len)
