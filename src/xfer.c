@@ -1,12 +1,24 @@
 #include "codec.h"
 #include "xfer.h"
 
+#include <arpa/inet.h>
 #include <stdio.h>
 #include <stdlib.h>
+#if defined(__linux__)
+#include <string.h>
+#endif
 #include <sys/socket.h>
 #include <unistd.h>
 
-#ifdef DEBUG
+#if defined(__linux__)
+static char *inet_ntoa_r(uint32_t addr, char *dest, size_t destlen)
+{
+	struct in_addr a = {.s_addr = addr};
+	strncpy(dest, inet_ntoa(a), destlen);
+	return dest;
+}
+#endif
+
 static void vtun_dump_iphdr(info)
 	vtun_info_t *info;
 {
@@ -28,7 +40,6 @@ static void vtun_dump_iphdr(info)
 		inet_ntoa_r(iphdr->daddr, info->name2, sizeof(info->name2)));
 #endif
 }
-#endif
 
 void vtun_xfer_keepalive(info)
 	vtun_info_t *info;
@@ -47,16 +58,14 @@ void vtun_xfer_l2p(info)
 		perror("read");
 		exit(1);
 	}
-#ifdef DEBUG
-	(void)printf("%zd bytes are read.\n", info->buflen);
-#endif
+	if (info->verbose)
+		(void)printf("%zd bytes are read.\n", info->buflen);
 
 	if (info->buflen < sizeof(info->obj.iphdr))
 		return;
 
-#ifdef DEBUG
-	vtun_dump_iphdr(info);
-#endif
+	if (info->verbose)
+		vtun_dump_iphdr(info);
 
 	if (info->ignore)
 		return;
@@ -71,10 +80,9 @@ void vtun_xfer_l2p(info)
 		perror("sendto");
 		exit(1);
 	}
-#ifdef DEBUG
-	(void)printf("%zd bytes are sent to %s:%d.\n", sent,
-		inet_ntoa(info->addr.sin_addr), ntohs(info->addr.sin_port));
-#endif
+	if (info->verbose)
+		(void)printf("%zd bytes are sent to %s:%d.\n", sent,
+			inet_ntoa(info->addr.sin_addr), ntohs(info->addr.sin_port));
 }
 
 void vtun_xfer_p2l(info)
@@ -91,28 +99,25 @@ void vtun_xfer_p2l(info)
 		perror("recvfrom");
 		exit(1);
 	}
-#ifdef DEBUG
-	(void)printf("%zd bytes are received from %s:%d.\n", info->buflen,
-		inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
-#endif
+	if (info->verbose)
+		(void)printf("%zd bytes are received from %s:%d.\n", info->buflen,
+			inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
 
 	if (info->obj.cmd != 1 || !(*info->xfer_p2l)(info, &addr))
 		return;
 	info->buflen -= sizeof(info->obj.cmd);
 
 	vtun_decode(info);
-#ifdef DEBUG
-	vtun_dump_iphdr(info);
-#endif
+	if (info->verbose)
+		vtun_dump_iphdr(info);
 
 	sent = write(info->dev, info->tmp, info->buflen);
 	if (sent < 0) {
 		perror("write");
 		exit(1);
 	}
-#ifdef DEBUG
-	(void)printf("%zd bytes are written.\n", sent);
-#endif
+	if (info->verbose)
+		(void)printf("%zd bytes are written.\n", sent);
 }
 
 void vtun_xfer_raw(info, msg, len)

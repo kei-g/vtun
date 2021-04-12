@@ -32,10 +32,9 @@ struct _vtun_info {
 	EVP_CIPHER_CTX *dec, *enc;
 	int dev, ignore, sock;
 	struct timespec *keepalive;
-#ifdef DEBUG
 	char name1[32], name2[32];
-#endif
 	uint8_t tmp[65536];
+	int verbose;
 	int (*xfer_p2l)(vtun_info_t *info, const struct sockaddr_in *addr);
 };
 

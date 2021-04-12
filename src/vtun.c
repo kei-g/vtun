@@ -137,7 +137,14 @@ int main(argc, argv)
 	char *argv[];
 {
 	char *bn, *confpath = NULL, *pidpath = NULL;
-	int opt;
+	int opt, idx, verbose = 0;
+	struct option opts[] = {
+		{ "background", no_argument, NULL, 'b' },
+		{ "conffile", required_argument, NULL, 'c' },
+		{ "pidfile", required_argument, NULL, 'p' },
+		{ "verbose", no_argument, NULL, 'v' },
+		{ "version", no_argument, NULL, 'V' },
+	};
 	pid_t pid;
 	vtun_conf_t conf;
 	vtun_info_t *info;
@@ -147,8 +154,12 @@ int main(argc, argv)
 	if (strcmp(bn, "vtun-keygen") == 0)
 		return vtun_bn_generate_key();
 
-	while ((opt = getopt(argc, argv, "bc:p:")) != -1)
+	while ((opt = getopt_long(argc, argv, "Vbc:p:v", opts, &idx)) != -1)
 		switch (opt) {
+		case 'V':
+			printf("%s version 1.0.0\n", bn);
+			exit(EXIT_SUCCESS);
+			break;
 		case 'b':
 			if ((pid = fork()) < 0) {
 				perror("fork");
@@ -162,6 +173,9 @@ int main(argc, argv)
 			break;
 		case 'p':
 			pidpath = strdup(optarg);
+			break;
+		case 'v':
+			verbose++;
 			break;
 		}
 
@@ -188,6 +202,8 @@ int main(argc, argv)
 		perror("malloc");
 		exit(1);
 	}
+
+	info->verbose = verbose;
 
 	w.tv_sec = 30;
 	w.tv_nsec = 0;
