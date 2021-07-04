@@ -1,0 +1,12 @@
+language: c
+dist: focal
+addons:
+  apt:
+    packages:
+      - clang
+      - cmake
+      - llvm
+      - llvm-dev
+      - llvm-runtime
+script:
+  - make
