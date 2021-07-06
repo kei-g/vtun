@@ -2,5 +2,5 @@
 
 L2/L3 VPN over UDP for FreeBSD
 
-[![Build Status](https://travis-ci.com/kei-g/vtun.svg?branch=main)](https://travis-ci.com/kei-g/vtun)
-[![License](https://img.shields.io/badge/License-BSD%203--Clause-orange.svg)](https://opensource.org/licenses/BSD-3-Clause)
+[![Travis CI](https://img.shields.io/travis/com/kei-g/vtun?logo=travis&style=plastic)](https://www.travis-ci.com/github/kei-g/vtun)
+[![License](https://img.shields.io/github/license/kei-g/vtun?style=plastic)](https://opensource.org/licenses/BSD-3-Clause)
