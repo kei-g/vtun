@@ -1,12 +1,10 @@
+dist:
+  - focal
 language: c
-dist: focal
-addons:
-  apt:
-    packages:
-      - clang
-      - cmake
-      - llvm
-      - llvm-dev
-      - llvm-runtime
+notifications:
+  email: false
+os:
+  - freebsd
+  - linux
 script:
   - make
