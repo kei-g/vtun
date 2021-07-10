@@ -1,2 +1,2 @@
-cmake_minimum_required(VERSION 3.16.3)
+cmake_minimum_required(VERSION 3.15.5)
 project(vtun)
